@@ -1,6 +1,6 @@
 export const site = {
   name: 'blog-dev',
-  author: 'dev',
+  author: 'Natan Barbosa',
   url: 'http://localhost:5173',
   email: 'hello@blog-dev.dev',
   description:
