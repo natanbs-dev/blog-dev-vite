@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="blog-dev — blog de programação: guias práticos, boas práticas e reflexões sobre engenharia de software." />
+    <title>blog-dev — blog de programação</title>
+    <script>
+      // Anti-FOUC: aplica o tema antes da primeira pintura.
+      // Padrão: dark. Aceita: dark, light, gruvbox-dark + extras.
+      (function () {
+        var THEMES = ["dark", "light", "gruvbox-dark", "dracula", "one-dark", "nord", "catppuccin-dark"];
+        try {
+          var t = localStorage.getItem("theme");
+          if (t && THEMES.indexOf(t) > -1) {
+            document.documentElement.setAttribute("data-theme", t);
+          } else if (window.matchMedia("(prefers-color-scheme: light)").matches && !t) {
+            // respeita o SO apenas quando nunca escolheu; padrão continua dark
+            document.documentElement.setAttribute("data-theme", "dark");
+          } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+          }
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
