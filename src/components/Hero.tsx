@@ -22,8 +22,8 @@ export default function Masthead({
             Escrevo sobre <em>códigos</em> que resolvem problemas reais.
           </h1>
           <p className="masthead__lede">
-            {site.description} Cada texto nasce como um arquivo markdown em{' '}
-            <code>content/posts/</code> — sem painel, sem banco, sem cerimônia.
+            {site.description} Cada texto nasce direto no editor — sem painel, sem banco,
+            sem cerimônia.
           </p>
           <dl className="masthead__facts">
             <div>

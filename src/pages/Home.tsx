@@ -50,9 +50,7 @@ export default function Home() {
           </h2>
           <div className="rows">
             {rest.length === 0 && !featured ? (
-              <p style={{ color: 'var(--muted)' }}>
-                Caderno vazio. Escreva um <code>.md</code> em <code>content/posts/</code>.
-              </p>
+              <p style={{ color: 'var(--muted)' }}>Caderno vazio. Em breve, novas notas por aqui.</p>
             ) : (
               rest.map((post, i) => <PostRow key={post.slug} post={post} index={i} />)
             )}
@@ -75,8 +73,8 @@ export default function Home() {
             <section className="side-box">
               <h2 className="side-box__title">Publicar</h2>
               <p>
-                Novo arquivo em <code>content/posts/</code> com front-matter — o caderno indexa
-                sozinho. Busca em <code>ctrl k</code>, cópia em cada bloco de código.
+                Nova nota publicada — o caderno indexa sozinho. Busca em <code>ctrl k</code>,
+                cópia em cada bloco de código.
               </p>
               <Link to="/sobre" className="btn btn--ghost">
                 Como funciona

@@ -1,6 +1,6 @@
 ---
 title: "Bem-vindo ao meu blog"
-description: "Apresentando este espaço: o que você vai encontrar aqui, por que ele existe e como novos artigos são publicados — direto de pastas markdown."
+description: "Apresentando este espaço: o que você vai encontrar aqui e por que ele existe."
 date: "2026-09-01"
 tags: ["blog", "programação", "carreira"]
 published: true
@@ -19,12 +19,11 @@ SELECT c.code, c.name, c.is_system, c.active,
        string_agg(p.prefix, ', ' ORDER BY p.prefix) AS prefixos  
 ```
 
-## Por que um blog de markdown?
+## Por que um blog simples?
 
-A resposta curta: porque a ferramenta certa não atrapalha. Eu escrevo em
-`markdown`, salvo o arquivo na pasta `content/posts/` e o artigo aparece no
-site — com a formatação pronta, *sem* painel administrativo, sem banco de
-dados, sem burocracia.
+A resposta curta: porque a ferramenta certa não atrapalha. Eu escrevo o texto
+e o artigo aparece no site — com a formatação pronta, *sem* painel
+administrativo, sem banco de dados, sem burocracia.
 
 Um dos princípios que mais respeito em engenharia de software é o **bike
 shedding**: gastar energia no que importa. O conteúdo é o que importa aqui.
@@ -40,14 +39,7 @@ shedding**: gastar energia no que importa. O conteúdo é o que importa aqui.
 ## Como este site funciona
 
 Você pode estar lendo a primeira publicação de um sistema simples, e isso é
-intencional. O site lê a pasta de conteúdo em tempo de execução, então novo
-conteúdo aparece ao salvar o arquivo.
-
-```bash
-# workflow de publicação
-$ vim content/posts/meu-novo-artigo.md   # escreve com front matter
-$ npm run dev                            # o artigo já está no ar
-```
+intencional. O conteúdo novo aparece no site assim que é publicado.
 
 ### Front matter
 
