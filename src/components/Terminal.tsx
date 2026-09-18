@@ -201,7 +201,7 @@ export default function Terminal({
           push([{ kind: 'out', text: 'visitor — leitor do blog-dev' }]);
           break;
         case 'ls':
-          push([{ kind: 'out', text: 'content/  src/  about.md  arquivo/  tags/' }]);
+          push([{ kind: 'out', text: 'arquivo/  tags/  sobre/  buscar/' }]);
           break;
         case 'help':
         case 'ajuda':

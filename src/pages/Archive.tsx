@@ -16,8 +16,7 @@ export default function Archive() {
         <p className="kicker">❯_ arquivo</p>
         <h1>Todas as notas</h1>
         <p>
-          {posts.length} verbetes compilados direto de <code>content/posts/</code>, em ordem
-          cronológica inversa.
+          {posts.length} verbetes, em ordem cronológica inversa.
         </p>
       </div>
 

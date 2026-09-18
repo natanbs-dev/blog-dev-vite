@@ -1,12 +1,12 @@
 ---
 title: "Guia do Markdown no blog-dev"
-description: "Tudo que o blog-dev entende: títulos, listas, tabelas, citações, imagens, código com botão copiar e mais — escreva em content/posts e veja aparecer."
+description: "Tudo que o blog entende: títulos, listas, tabelas, citações, imagens, código com botão copiar e mais."
 date: "2026-09-17"
 tags: ["markdown", "blog", "guia"]
 published: true
 ---
 
-Este post demonstra **tudo** que o blog-dev renderiza. Para publicar, basta criar um arquivo `.md` em `content/posts/` com um front-matter como este — o site detecta sozinho.
+Este post demonstra **tudo** que o blog renderiza.
 
 ## Títulos e âncoras
 
@@ -58,9 +58,8 @@ console.log(soma(2, 3)); // 5
 ```
 
 ```bash
-# workflow de publicação
-vim content/posts/meu-novo-artigo.md
-npm run dev   # o artigo já está no ar
+# exemplo de comando
+npm run dev   # para ver o site localmente
 ```
 
 ```python
@@ -74,9 +73,9 @@ def saudacao(nome: str) -> str:
 
 Use `---` para separar seções. Imagens com legenda funcionam com markdown padrão — coloque o arquivo em `public/` e referencie com `/nome.png`.
 
-## Checklist de publicação
+## Checklist de leitura
 
-1. Crie `content/posts/meu-post.md` com `title`, `description`, `date`, `tags`.
+1. Abra um artigo com `title`, `description`, `date`, `tags`.
 2. Rode `npm run dev` e abra o artigo.
 3. Teste `Ctrl + K`, troque os temas, clique em **Copiar** nos blocos.
 4. Rode `npm run build` para gerar o índice de busca + bundle final.

@@ -26,7 +26,7 @@ export default function PostPage() {
           <div>
             <div className="notfound__code">404</div>
             <h1>Nota não encontrada</h1>
-            <p>O verbete “{slug}” não existe em content/posts/.</p>
+            <p>O verbete “{slug}” não foi encontrado.</p>
             <Link to="/" className="btn btn--primary">
               Voltar ao índice
             </Link>
