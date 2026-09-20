@@ -1,6 +1,6 @@
 # blog-dev-vite
 
-### blog-dev (Vite + React)
+### barbosa.md (Vite + React)
 
 Blog de artigos em **Vite + React + TypeScript**, onde cada post é um markdown em `content/posts/`.
 

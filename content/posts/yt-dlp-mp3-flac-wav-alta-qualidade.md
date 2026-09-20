@@ -1,9 +1,10 @@
 ---
-title: "yt-dlp: baixar em MP3, FLAC, WAV e vídeo em alta qualidade"
+title: "yt-dlp: baixar em MP3, FLAC, WAV e vídeos em alta qualidade"
 description: "Guia prático de yt-dlp: extrair áudio em mp3, flac e wav, baixar vídeo na qualidade máxima ou em 720p, e a melhor forma de instalar — pip ou pacote da distro."
 date: "2026-09-18"
 tags: ["yt-dlp", "terminal", "áudio", "vídeo"]
 published: true
+
 ---
 
 O `yt-dlp` é o sucessor do `youtube-dl` e hoje é a forma mais confiável de baixar vídeo e áudio para estudo offline, backup de conteúdo próprio ou arquivamento.
@@ -12,26 +13,22 @@ Este guia cobre o essencial: instalação correta, áudio em `mp3`, `flac` e `wa
 
 ## Instalação: pip ou pacote da distro?
 
-Resposta direta: prefira `pipx` ou `pip`, não o pacote do apt/dnf.
+Resposta direta: prefira o `pip`, não o pacote do apt/dnf/pacman.
 
 O `yt-dlp` quebra com frequência por mudança nos sites. O projeto lança correção em dias, mas o pacote da distro congela por meses. Instalando via `pip`, você atualiza com um comando.
 
-```bash
-# recomendado: pipx (isola o binário, sem bagunçar o Python do sistema)
-sudo apt install pipx ffmpeg
-pipx install yt-dlp
-pipx upgrade yt-dlp
-```
 
 ```bash
-# alternativa: pip com --user
+sudo pacman -Syy python ffmpeg
+python3 -m venv myenv
+source myenv/bin/activate
 pip install -U yt-dlp
 yt-dlp -U
 ```
 
 ```bash
 # funciona, mas desatualiza rápido — evite no dia a dia
-sudo apt install yt-dlp
+sudo pacman -Syy yt-dlp
 ```
 
 > Regra de ouro: instale o `ffmpeg` pelo gerenciador da distro, e o `yt-dlp` pelo `pipx`. O `yt-dlp` precisa do `ffmpeg` para converter e juntar áudio + vídeo.

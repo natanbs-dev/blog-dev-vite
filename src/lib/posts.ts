@@ -18,6 +18,7 @@ export interface PostMeta {
   date: string;
   tags: string[];
   published: boolean;
+  featured: boolean;
   words: number;
   readingTime: string;
 }
@@ -191,9 +192,15 @@ function toMeta(slug: string, data: Record<string, unknown>, raw: string): PostM
     date,
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
     published: data.published === undefined ? true : Boolean(data.published),
+    featured: Boolean(data.featured),
     words,
     readingTime: humanReadingTime(body),
   };
+}
+
+export function getFeaturedPost(): PostMeta | null {
+  const posts = getAllPosts();
+  return posts.find((p) => p.featured) ?? null;
 }
 
 export function getAllPosts(): PostMeta[] {

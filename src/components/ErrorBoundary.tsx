@@ -9,7 +9,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, { 
   }
 
   componentDidCatch(error: Error) {
-    console.error('[blog-dev]', error);
+    console.error('[barbosa.md]', error);
   }
 
   render() {
