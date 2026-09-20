@@ -59,7 +59,7 @@ export default function About() {
           rápidas e em documentar o próprio aprendizado.
         </p>
         <p className="whoami">
-          <span className="whoami__ps1">natan@blog-dev:~$</span> whoami
+          <span className="whoami__ps1">natan@barbosa.md:~$</span> whoami
           <span className="whoami__out">→ {profile.name.toLowerCase().replace(/\s+/g, '.')}</span>
         </p>
       </div>

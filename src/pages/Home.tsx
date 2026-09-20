@@ -2,14 +2,18 @@ import { Link } from 'react-router-dom';
 import Masthead from '../components/Hero';
 import PostRow from '../components/PostCard';
 import Reveal from '../components/Reveal';
-import { formatDate, getAllPosts, getAllTags, tagToSlug } from '../lib/posts';
+import { formatDate, getAllPosts, getAllTags, getFeaturedPost, tagToSlug } from '../lib/posts';
 
 export default function Home() {
   const posts = getAllPosts();
   const tags = getAllTags();
   const words = posts.reduce((acc, p) => acc + p.words, 0);
-  const [featured, ...rest] = posts;
-  const latest = posts.length > 1 ? posts[1].date : posts[0]?.date;
+  // Destaque por importância: usa o post com `featured: true`.
+  // Se nenhum (ou mais de um) estiver marcado, cai para o mais recente.
+  const featured = getFeaturedPost() ?? posts[0];
+  const rest = featured ? posts.filter((p) => p.slug !== featured.slug) : posts;
+  // Atualizado = data máxima entre todos os posts (novo artigo atualiza sozinho).
+  const latest = posts[0]?.date;
 
   return (
     <>

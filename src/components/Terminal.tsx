@@ -15,7 +15,7 @@ const ASCII_LOGO = [
   '       ██╔══██╗██║     ██║   ██║██║   ██║',
   '       ██████╔╝███████╗╚██████╔╝╚██████╔╝',
   '       ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ',
-  '            ❯_ blog-dev',
+  '            ❯_ barbosa.md',
 ];
 
 function pad(n: number) {
@@ -198,7 +198,7 @@ export default function Terminal({
           push([{ kind: 'uptime-live' }]);
           break;
         case 'whoami':
-          push([{ kind: 'out', text: 'visitor — leitor do blog-dev' }]);
+          push([{ kind: 'out', text: 'visitor — leitor do barbosa.md' }]);
           break;
         case 'ls':
           push([{ kind: 'out', text: 'arquivo/  tags/  sobre/  buscar/' }]);
@@ -276,14 +276,14 @@ export default function Terminal({
   const focusInput = () => inputRef.current?.focus();
 
   return (
-    <div className="term" role="region" aria-label="Terminal do blog — fastfetch, cmatrix e uptime">
+    <div className="term" role="region" aria-label="Terminal do barbosa.md — fastfetch, cmatrix e uptime">
       <div className="term__bar">
         <span className="term__dots" aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        <span className="term__title">visitor@blog-dev: ~</span>
+        <span className="term__title">visitor@barbosa.md: ~</span>
         <span className="term__badges">
           <span className={`term__pulse${matrixOn ? ' is-on' : ''}`} title="cmatrix">
             <span className="term__pulse-dot" />
@@ -306,14 +306,14 @@ export default function Terminal({
         <div className="term__veil" aria-hidden="true" />
         <div ref={bodyRef} className="term__body">
           <p className="term__bootline">
-            <span className="term__ok">●</span> blog-dev shell v1.0 — cmatrix <em>on</em> · fastfetch · uptime
+            <span className="term__ok">●</span> barbosa.md shell v1.0 — cmatrix <em>on</em> · fastfetch · uptime
           </p>
 
           {history.map((line, i) => {
             if (line.kind === 'cmd') {
               return (
                 <div key={i} className="term__line">
-                  <span className="term__ps1">visitor@blog-dev</span>
+                  <span className="term__ps1">visitor@barbosa.md</span>
                   <span className="term__sep">:</span>
                   <span className="term__path">~</span>
                   <span className="term__sep">$</span>
@@ -328,10 +328,10 @@ export default function Terminal({
                     {ASCII_LOGO.join('\n')}
                   </pre>
                   <dl className="term__specs">
-                    <div><dt>os</dt><dd>blog-devOS 1.0 x86_64</dd></div>
+                    <div><dt>os</dt><dd>barbosaOS 1.0 x86_64</dd></div>
                     <div><dt>kernel</dt><dd>6.9.0-vite</dd></div>
                     <div><dt>uptime</dt><dd className="term__live">{uptime}</dd></div>
-                    <div><dt>shell</dt><dd>blog-sh (interactive)</dd></div>
+                    <div><dt>shell</dt><dd>barbosa-sh (interactive)</dd></div>
                     <div><dt>theme</dt><dd>{theme}</dd></div>
                     <div><dt>posts</dt><dd>{postsCount} · {words.toLocaleString('pt-BR')} palavras · {tags} tópicos</dd></div>
                     <div><dt>de</dt><dd>react + vite + markdown</dd></div>
@@ -367,7 +367,7 @@ export default function Terminal({
 
           {booted && (
             <form className="term__line term__prompt" onSubmit={onSubmit}>
-              <span className="term__ps1">visitor@blog-dev</span>
+              <span className="term__ps1">visitor@barbosa.md</span>
               <span className="term__sep">:</span>
               <span className="term__path">~</span>
               <span className="term__sep">$</span>
