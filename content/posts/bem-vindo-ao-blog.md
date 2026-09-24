@@ -2,7 +2,7 @@
 title: "Bem-vindo ao meu blog"
 description: "Apresentando este espaço: o que você vai encontrar aqui e por que ele existe."
 date: "2026-09-01"
-tags: ["blog", "programação", "carreira"]
+tags: ["blog", "programação", "carreira", "shell"]
 published: true
 ---
 
