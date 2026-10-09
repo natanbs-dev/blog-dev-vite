@@ -1,7 +1,6 @@
-import { Link } from 'react-router-dom';
-import Reveal from '../components/Reveal';
 import { site } from '../lib/site';
 import { getAllPosts, getAllTags } from '../lib/posts';
+import { useTitle } from '../lib/useTitle';
 
 /* ================================================================
    MINICURRÍCULO — edite livremente: perfil, skills e trajetória.
@@ -9,8 +8,7 @@ import { getAllPosts, getAllTags } from '../lib/posts';
 
 const profile = {
   name: 'Natan Barbosa',
-  initials: 'NB',
-  role: 'Desenvolvedor de software · criador deste blog',
+  role: 'Desenvolvedor de software e autor deste blog.',
   bio: 'Escrevo código e escrevo sobre código. Este blog nasceu da vontade de transformar as anotações soltas do meu dia a dia em conteúdo útil para outros desenvolvedores e desenvolvedoras.',
 };
 
@@ -30,148 +28,94 @@ const skillGroups = [
 const timeline = [
   {
     role: 'Desenvolvedor de software',
-    when: '2023 — presente',
+    when: '2023 até hoje',
     desc: 'Construção de aplicações web com React e Node.js, do protótipo ao deploy — APIs, bancos relacionais e automação pelo terminal.',
   },
   {
     role: 'Aprofundamento em engenharia de software',
-    when: '2021 — 2023',
+    when: '2021 a 2023',
     desc: 'Base sólida em JavaScript/TypeScript, SQL, testes automatizados e boas práticas de código legível e revisões que ensinam.',
   },
   {
     role: 'Primeiros passos no código',
-    when: '2020 — 2021',
+    when: '2020 a 2021',
     desc: 'Fundamentos de programação, lógica e web — e o hábito de documentar tudo, que mais tarde virou este blog.',
   },
 ];
 
 export default function About() {
+  useTitle('Sobre');
   const posts = getAllPosts();
   const tags = getAllTags();
 
   return (
-    <div className="wrap" style={{ paddingBottom: 88 }}>
-      <div className="page-head">
-        <p className="kicker">❯_ sobre</p>
-        <h1>Olá, eu sou o {profile.name}.</h1>
-        <p>
-          Desenvolvedor de software que acredita em código legível, interfaces
-          rápidas e em documentar o próprio aprendizado.
-        </p>
-        <p className="whoami">
-          <span className="whoami__ps1">natan@barbosa.md:~$</span> whoami
-          <span className="whoami__out">→ {profile.name.toLowerCase().replace(/\s+/g, '.')}</span>
-        </p>
-      </div>
+    <div className="wrap page about">
+      <header className="page-head">
+        <h1>{profile.name}</h1>
+        <p>{profile.role}</p>
+      </header>
 
-      <div className="about-grid">
-        <div className="about-main">
-          <Reveal>
-            <section className="about-panel about-identity">
-              <div className="avatar avatar--lg" aria-hidden="true">
-                {profile.initials}
-              </div>
-              <div>
-                <h2>{profile.name}</h2>
-                <p className="about-identity__role">{profile.role}</p>
-                <p className="about-identity__bio">{profile.bio}</p>
-              </div>
-            </section>
-          </Reveal>
+      <div className="about__grid">
+        <div className="about__main">
+          <p className="about__bio">{profile.bio}</p>
 
-          <Reveal delay={80}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">No que acredito</h3>
-              <ul className="values">
-                {principles.map((v, i) => (
-                  <li key={v.title}>
-                    <span className="values__n">{String(i + 1).padStart(2, '0')}</span>
-                    <h4>{v.title}</h4>
-                    <p>{v.desc}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </Reveal>
-
-          <Reveal delay={120}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">Trajetória</h3>
-              <ul className="timeline">
-                {timeline.map((item) => (
-                  <li key={item.role}>
-                    <h4>{item.role}</h4>
-                    <span className="when">{item.when}</span>
-                    <p>{item.desc}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </Reveal>
-        </div>
-
-        <aside className="about-side">
-          <Reveal delay={100}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">Ficha</h3>
-              <dl className="facts">
-                <div>
-                  <dt>nome</dt>
-                  <dd>{profile.name}</dd>
-                </div>
-                <div>
-                  <dt>base</dt>
-                  <dd>JavaScript · TypeScript</dd>
-                </div>
-                <div>
-                  <dt>foco</dt>
-                  <dd>React · Node · SQL</dd>
-                </div>
-                <div>
-                  <dt>artigos</dt>
-                  <dd>
-                    {posts.length} em {tags.length} tópicos
-                  </dd>
-                </div>
-              </dl>
-            </section>
-          </Reveal>
-
-          <Reveal delay={160}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">Stack do dia a dia</h3>
-              {skillGroups.map((g) => (
-                <div key={g.label} className="skill-group">
-                  <h4>{g.label}</h4>
-                  <div className="skills">
-                    {g.items.map((s) => (
-                      <span className="skill-chip" key={s}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
+          <section aria-labelledby="principios">
+            <h2 id="principios">No que acredito</h2>
+            <dl className="values">
+              {principles.map((v) => (
+                <div key={v.title}>
+                  <dt>{v.title}</dt>
+                  <dd>{v.desc}</dd>
                 </div>
               ))}
-            </section>
-          </Reveal>
+            </dl>
+          </section>
 
-          <Reveal delay={220}>
-            <section className="about-panel about-contact">
-              <h3 className="about-panel__title">Vamos conversar</h3>
-              <p>
-                Troco ideia sobre tecnologia, carreira e produtividade. Me chame
-                por e-mail ou acompanhe as publicações.
-              </p>
-              <p className="about-section__actions">
-                <a className="btn btn--primary" href={`mailto:${site.email}`}>
-                  Enviar e-mail
-                </a>
-                <Link to="/" className="btn btn--ghost">
-                  Ler o blog →
-                </Link>
-              </p>
-            </section>
-          </Reveal>
+          <section aria-labelledby="trajetoria">
+            <h2 id="trajetoria">Trajetória</h2>
+            <ol className="timeline">
+              {timeline.map((item) => (
+                <li key={item.role}>
+                  <span className="timeline__when">{item.when}</span>
+                  <h3>{item.role}</h3>
+                  <p>{item.desc}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+
+        <aside className="about__side">
+          <section aria-labelledby="stack">
+            <h2 id="stack">Stack do dia a dia</h2>
+            <dl className="facts">
+              {skillGroups.map((g) => (
+                <div key={g.label}>
+                  <dt>{g.label}</dt>
+                  <dd>{g.items.join(', ')}</dd>
+                </div>
+              ))}
+              <div>
+                <dt>Neste blog</dt>
+                <dd>
+                  {posts.length} artigos em {tags.length} tópicos
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section aria-labelledby="contato">
+            <h2 id="contato">Contato</h2>
+            <p>Troco ideia sobre tecnologia, carreira e produtividade.</p>
+            <p className="about__actions">
+              <a className="btn btn--primary" href={`mailto:${site.email}`}>
+                Enviar e-mail
+              </a>
+              <a className="btn btn--ghost" href={site.github} rel="noreferrer">
+                Abrir o GitHub
+              </a>
+            </p>
+          </section>
         </aside>
       </div>
     </div>

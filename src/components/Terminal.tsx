@@ -1,398 +1,447 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  getAllPosts,
+  getAllTags,
+  getPostsByTag,
+  normalize,
+  searchPosts,
+  shortDate,
+  type PostMeta,
+} from '../lib/posts';
+import { site } from '../lib/site';
+import { setTheme, THEMES, useTheme } from '../lib/theme';
 
 type Line =
   | { kind: 'cmd'; text: string }
-  | { kind: 'out'; text: string; accent?: boolean }
-  | { kind: 'fastfetch' }
-  | { kind: 'uptime-live' };
+  | { kind: 'out'; text: string; tone?: 'dim' | 'err' }
+  | { kind: 'posts'; items: PostMeta[] }
+  | { kind: 'tags' }
+  | { kind: 'themes' }
+  | { kind: 'help' }
+  | { kind: 'fetch' };
 
-const MATRIX_CHARS = 'アイカサタナハマヤラワ0123456789ABCDEF$#*+=<>ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾙｾﾈﾙﾀﾇﾇﾎ'.split('');
-
-const ASCII_LOGO = [
-  '       ██████╗ ██╗      ██████╗  ██████╗ ',
-  '       ██╔══██╗██║     ██╔═══██╗██╔════╝ ',
-  '       ██████╔╝██║     ██║   ██║██║  ███╗',
-  '       ██╔══██╗██║     ██║   ██║██║   ██║',
-  '       ██████╔╝███████╗╚██████╔╝╚██████╔╝',
-  '       ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ',
-  '            ❯_ barbosa.md',
+const HELP: [string, string][] = [
+  ['ls [tópico]', 'lista os artigos'],
+  ['cat <n>', 'abre o artigo de número n'],
+  ['grep <termo>', 'procura no texto dos artigos'],
+  ['tags', 'lista os tópicos'],
+  ['cd <lugar>', 'vai para artigos, topicos ou sobre'],
+  ['random', 'abre um artigo ao acaso'],
+  ['theme [nome]', 'mostra ou troca o tema'],
+  ['cmatrix [on|off]', 'liga ou desliga a chuva ao fundo'],
+  ['fastfetch', 'resumo do blog'],
+  ['clear', 'limpa a tela'],
 ];
 
-function pad(n: number) {
-  return String(n).padStart(2, '0');
-}
+const COMMANDS = ['ls', 'cat', 'grep', 'tags', 'cd', 'random', 'theme', 'cmatrix', 'fastfetch', 'clear', 'help', 'whoami', 'pwd', 'date', 'echo'];
+const SHORTCUTS = ['ls', 'tags', 'random', 'theme', 'cmatrix', 'help'];
+const PLACES: Record<string, string> = {
+  '~': '/',
+  '/': '/',
+  inicio: '/',
+  artigos: '/arquivo',
+  arquivo: '/arquivo',
+  topicos: '/tags',
+  tags: '/tags',
+  sobre: '/sobre',
+};
 
-function formatUptime(ms: number) {
-  const s = Math.floor(ms / 1000);
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if (d > 0) return `up ${d} day${d > 1 ? 's' : ''}, ${pad(h)}:${pad(m)}:${pad(sec)}`;
-  return `up ${pad(h)}:${pad(m)}:${pad(sec)}`;
-}
+// "❯_" em pixels: independe de a fonte ter os glifos de bloco.
+const LOGO = ['#........', '.#.......', '..#......', '.#.......', '#...####.'];
 
-function useNow(intervalMs = 1000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), intervalMs);
-    return () => window.clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
+const BOOT = 'fastfetch';
 
 export default function Terminal({
-  postsCount = 0,
-  words = 0,
-  tags = 0,
+  matrixOn,
+  onMatrix,
 }: {
-  postsCount?: number;
-  words?: number;
-  tags?: number;
+  matrixOn: boolean;
+  onMatrix: (on: boolean) => void;
 }) {
-  const bootTime = useRef(Date.now());
-  const now = useNow(1000);
-  const uptime = useMemo(() => formatUptime(now - bootTime.current), [now]);
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const posts = getAllPosts();
+  const tags = getAllTags();
 
-  const [matrixOn, setMatrixOn] = useState(true);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [typed, setTyped] = useState('');
   const [booted, setBooted] = useState(false);
-  const [history, setHistory] = useState<Line[]>([]);
   const [input, setInput] = useState('');
-  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
-  const [histIdx, setHistIdx] = useState(-1);
+  const [past, setPast] = useState<string[]>([]);
+  const [pastIdx, setPastIdx] = useState(-1);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const stick = useRef(false);
 
-  const theme =
-    typeof document === 'undefined'
-      ? 'dark'
-      : document.documentElement.getAttribute('data-theme') ?? 'dark';
-
-  // ---------- sequencia de boot: fastfetch + uptime ----------
+  // Única animação da página: o comando de abertura é "digitado" uma vez.
   useEffect(() => {
-    const seq: Line[] = [{ kind: 'cmd', text: 'fastfetch' }, { kind: 'fastfetch' }];
-    let i = 0;
-    setHistory([]);
-    setBooted(false);
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      setHistory([...seq, { kind: 'cmd', text: 'uptime -p' }, { kind: 'uptime-live' }]);
+    const finish = () => {
+      setLines([{ kind: 'cmd', text: BOOT }, { kind: 'fetch' }]);
+      setTyped('');
       setBooted(true);
+    };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      finish();
       return;
     }
+    let i = 0;
+    let done = 0;
     const id = window.setInterval(() => {
       i += 1;
-      setHistory(seq.slice(0, i));
-      if (i >= seq.length) {
+      setTyped(BOOT.slice(0, i));
+      if (i >= BOOT.length) {
         window.clearInterval(id);
-        window.setTimeout(() => {
-          setHistory((h) => [...h, { kind: 'cmd', text: 'uptime -p' }, { kind: 'uptime-live' }]);
-          setBooted(true);
-        }, 550);
+        done = window.setTimeout(finish, 320);
       }
-    }, 420);
-    return () => window.clearInterval(id);
+    }, 70);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(done);
+    };
   }, []);
 
-  // ---------- autoscroll ----------
+  // Só acompanha o fim da tela depois de um comando do visitante.
   useEffect(() => {
-    const el = bodyRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [history, booted]);
+    const el = screenRef.current;
+    if (el && stick.current) el.scrollTop = el.scrollHeight;
+  }, [lines]);
 
-  // ---------- cmatrix no background ----------
-  useEffect(() => {
-    if (!matrixOn) return;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const numberOf = (post: PostMeta) => posts.indexOf(post) + 1;
 
-    let raf = 0;
-    let cols = 0;
-    let drops: number[] = [];
-    const fontSize = 13;
+  function run(raw: string) {
+    const text = raw.trim();
+    if (!text) return;
+    stick.current = true;
+    setPast((h) => [text, ...h.filter((c) => c !== text)].slice(0, 50));
+    setPastIdx(-1);
 
-    const resize = () => {
-      const parent = canvas.parentElement;
-      if (!parent) return;
-      const rect = parent.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      cols = Math.floor(rect.width / fontSize);
-      drops = Array.from({ length: cols }, () => Math.random() * -40);
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    if (canvas.parentElement) ro.observe(canvas.parentElement);
+    const [bin, ...args] = text.split(/\s+/);
+    const arg = args.join(' ');
+    const print = (...out: Line[]) => setLines((l) => [...l, { kind: 'cmd', text }, ...out]);
+    const say = (msg: string, tone?: 'dim' | 'err'): Line => ({ kind: 'out', text: msg, tone });
 
-    const accent = () =>
-      getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e09a2b';
-
-    let last = 0;
-    const draw = (t: number) => {
-      raf = requestAnimationFrame(draw);
-      if (t - last < 66) return;
-      last = t;
-      const w = canvas.width;
-      const h = canvas.height;
-      // fade — deixa rastro
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.14)';
-      const cssW = canvas.parentElement?.getBoundingClientRect().width ?? 400;
-      const cssH = canvas.parentElement?.getBoundingClientRect().height ?? 300;
-      ctx.fillRect(0, 0, cssW, cssH);
-      ctx.font = `${fontSize}px ui-monospace, Menlo, Consolas, monospace`;
-      const color = accent();
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.5;
-      for (let c = 0; c < cols; c++) {
-        const ch = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
-        const x = c * fontSize;
-        const y = drops[c] * fontSize;
-        // cabeça brilhante
-        if (Math.random() > 0.975) {
-          ctx.globalAlpha = 0.9;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText(ch, x, y);
-          ctx.fillStyle = color;
-          ctx.globalAlpha = 0.5;
-        } else {
-          ctx.fillText(ch, x, y);
+    switch (bin.toLowerCase()) {
+      case 'help':
+      case 'ajuda':
+        print({ kind: 'help' });
+        break;
+      case 'ls':
+      case 'll': {
+        if (!arg) {
+          print({ kind: 'posts', items: posts });
+          break;
         }
-        if (y > cssH && Math.random() > 0.976) drops[c] = 0;
-        drops[c]++;
+        const tag = tags.find((t) => normalize(t.name) === normalize(arg) || t.slug === arg);
+        if (tag) print({ kind: 'posts', items: getPostsByTag(tag.name) });
+        else print(say(`ls: nenhum tópico chamado "${arg}". Use "tags" para ver os que existem.`, 'err'));
+        break;
       }
-      ctx.globalAlpha = 1;
-      void w;
-      void h;
-    };
-    raf = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
-  }, [matrixOn]);
+      case 'cat':
+      case 'open':
+      case 'abrir': {
+        const post = /^\d+$/.test(arg) ? posts[Number(arg) - 1] : posts.find((p) => p.slug === arg);
+        if (post) {
+          print(say(`abrindo "${post.title}"`, 'dim'));
+          navigate(`/posts/${post.slug}`);
+        } else {
+          print(say(`cat: informe o número de um artigo, de 1 a ${posts.length}. "ls" mostra a lista.`, 'err'));
+        }
+        break;
+      }
+      case 'grep':
+      case 'buscar': {
+        if (!arg) {
+          print(say('grep: informe um termo, por exemplo "grep ffmpeg".', 'err'));
+          break;
+        }
+        const found = searchPosts(arg).map((d) => d.post);
+        if (found.length) print({ kind: 'posts', items: found });
+        else print(say(`grep: nenhum artigo menciona "${arg}".`, 'err'));
+        break;
+      }
+      case 'tags':
+      case 'topicos':
+        print({ kind: 'tags' });
+        break;
+      case 'cd': {
+        const key = normalize(arg || '~').replace(/\/+$/, '') || '/';
+        const tag = tags.find((t) => t.slug === key.replace(/^(tags|topicos)\//, ''));
+        const to = PLACES[key] ?? (tag ? `/tags/${tag.slug}` : null);
+        if (to) {
+          print();
+          navigate(to);
+        } else {
+          print(say(`cd: "${arg}" não existe. Lugares: artigos, topicos, sobre.`, 'err'));
+        }
+        break;
+      }
+      case 'random':
+      case 'sorteio': {
+        const post = posts[Math.floor(Math.random() * posts.length)];
+        if (post) {
+          print(say(`abrindo "${post.title}"`, 'dim'));
+          navigate(`/posts/${post.slug}`);
+        }
+        break;
+      }
+      case 'theme':
+      case 'tema': {
+        if (!arg) {
+          print({ kind: 'themes' });
+          break;
+        }
+        const wanted = normalize(arg);
+        const found = THEMES.find((t) => t.id === wanted || normalize(t.label) === wanted);
+        if (found) {
+          setTheme(found.id);
+          print(say(`tema trocado para ${found.label}.`));
+        } else {
+          print(say(`theme: não conheço "${arg}".`, 'err'), { kind: 'themes' });
+        }
+        break;
+      }
+      case 'cmatrix':
+      case 'matrix': {
+        const next = arg === 'on' ? true : arg === 'off' ? false : !matrixOn;
+        onMatrix(next);
+        print(say(next ? 'chuva ligada.' : 'chuva desligada.'));
+        break;
+      }
+      case 'fastfetch':
+      case 'neofetch':
+        print({ kind: 'fetch' });
+        break;
+      case 'clear':
+      case 'limpar':
+        setLines([]);
+        break;
+      case 'whoami':
+        print(say('visitante'));
+        break;
+      case 'pwd':
+        print(say('/home/visitante'));
+        break;
+      case 'date':
+        print(say(new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })));
+        break;
+      case 'echo':
+        print(say(arg));
+        break;
+      case 'sudo':
+        print(say('visitante não está no arquivo sudoers. Este incidente será relatado.', 'err'));
+        break;
+      default:
+        print(say(`${bin}: comando não encontrado. "help" lista os comandos.`, 'err'));
+    }
+  }
 
-  const runCommand = useCallback(
-    (raw: string) => {
-      const cmd = raw.trim();
-      const base: Line[] = cmd ? [{ kind: 'cmd', text: cmd }] : [];
-      if (!cmd) {
-        setHistory((h) => [...h, ...base]);
-        return;
-      }
-      const [bin, ...args] = cmd.split(/\s+/);
-      const push = (lines: Line[]) => setHistory((h) => [...h, ...base, ...lines]);
-
-      switch (bin.toLowerCase()) {
-        case 'fastfetch':
-        case 'neofetch':
-          push([{ kind: 'fastfetch' }]);
-          break;
-        case 'uptime':
-          push([{ kind: 'uptime-live' }]);
-          break;
-        case 'whoami':
-          push([{ kind: 'out', text: 'visitor — leitor do barbosa.md' }]);
-          break;
-        case 'ls':
-          push([{ kind: 'out', text: 'arquivo/  tags/  sobre/  buscar/' }]);
-          break;
-        case 'help':
-        case 'ajuda':
-          push([
-            { kind: 'out', text: 'comandos: fastfetch · uptime · whoami · ls · theme · matrix · clear · help', accent: true },
-          ]);
-          break;
-        case 'theme':
-          push([{ kind: 'out', text: `theme: ${theme} (troque no seletor do topo ☾)` }]);
-          break;
-        case 'matrix':
-          if (args[0] === 'off') {
-            setMatrixOn(false);
-            push([{ kind: 'out', text: 'cmatrix desativado.' }]);
-          } else if (args[0] === 'on') {
-            setMatrixOn(true);
-            push([{ kind: 'out', text: 'cmatrix ativado. welcome to the grid.' }]);
-          } else {
-            setMatrixOn((v) => !v);
-            push([{ kind: 'out', text: matrixOn ? 'cmatrix desativado.' : 'cmatrix ativado.' }]);
-          }
-          break;
-        case 'clear':
-        case 'limpar':
-          setHistory([]);
-          break;
-        case 'sudo':
-          push([{ kind: 'out', text: 'visitor is not in the sudoers file. this incident will be reported. 😏' }]);
-          break;
-        default:
-          push([{ kind: 'out', text: `command not found: ${bin} — tente "help"` }]);
-      }
-    },
-    [matrixOn, theme],
-  );
+  function complete() {
+    const parts = input.split(/\s+/);
+    const last = normalize(parts[parts.length - 1]);
+    const bin = parts[0].toLowerCase();
+    let pool: string[] = COMMANDS;
+    if (parts.length > 1) {
+      if (bin === 'ls') pool = tags.map((t) => t.slug);
+      else if (bin === 'cd') pool = ['artigos', 'topicos', 'sobre'];
+      else if (bin === 'theme' || bin === 'tema') pool = THEMES.map((t) => t.id);
+      else if (bin === 'cmatrix') pool = ['on', 'off'];
+      else if (bin === 'cat' || bin === 'open') pool = posts.map((p) => p.slug);
+      else return;
+    }
+    const matches = pool.filter((c) => c.startsWith(last));
+    if (matches.length === 1) {
+      setInput([...parts.slice(0, -1), matches[0]].join(' ') + ' ');
+    } else if (matches.length > 1) {
+      stick.current = true;
+      setLines((l) => [...l, { kind: 'out', text: matches.join('  '), tone: 'dim' }]);
+    }
+  }
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    runCommand(input);
-    if (input.trim()) {
-      setCmdHistory((h) => [input, ...h].slice(0, 50));
-      setHistIdx(-1);
-    }
+    run(input);
     setInput('');
-    inputRef.current?.focus();
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowUp') {
+    if (e.key === 'Tab' && input) {
       e.preventDefault();
-      const next = Math.min(histIdx + 1, cmdHistory.length - 1);
-      if (cmdHistory[next]) {
-        setHistIdx(next);
-        setInput(cmdHistory[next]);
+      complete();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = Math.min(pastIdx + 1, past.length - 1);
+      if (past[next] !== undefined) {
+        setPastIdx(next);
+        setInput(past[next]);
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const next = histIdx - 1;
-      if (next < 0) {
-        setHistIdx(-1);
-        setInput('');
-      } else {
-        setHistIdx(next);
-        setInput(cmdHistory[next]);
-      }
+      const next = pastIdx - 1;
+      setPastIdx(Math.max(next, -1));
+      setInput(next < 0 ? '' : past[next]);
     } else if (e.key === 'l' && e.ctrlKey) {
       e.preventDefault();
-      setHistory([]);
+      setLines([]);
     }
   };
 
-  const focusInput = () => inputRef.current?.focus();
+  // Clicar na tela leva ao prompt, sem atrapalhar links nem seleção de texto.
+  const onScreenClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('a, button')) return;
+    if (window.getSelection()?.toString()) return;
+    inputRef.current?.focus({ preventScroll: true });
+  };
+
+  const themeLabel = THEMES.find((t) => t.id === theme)?.label ?? theme;
+  const words = posts.reduce((sum, p) => sum + p.words, 0);
 
   return (
-    <div className="term" role="region" aria-label="Terminal do barbosa.md — fastfetch, cmatrix e uptime">
-      <div className="term__bar">
-        <span className="term__dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-        <span className="term__title">visitor@barbosa.md: ~</span>
-        <span className="term__badges">
-          <span className={`term__pulse${matrixOn ? ' is-on' : ''}`} title="cmatrix">
-            <span className="term__pulse-dot" />
-            matrix
-          </span>
-          <button
-            type="button"
-            className="term__toggle"
-            onClick={() => setMatrixOn((v) => !v)}
-            aria-pressed={matrixOn}
-            title=" alternar cmatrix"
-          >
-            {matrixOn ? '◉' : '○'}
-          </button>
-        </span>
-      </div>
+    <section className="term" aria-label="Terminal do blog">
+      <header className="term__bar">
+        <span className="term__title">visitante@{site.name}</span>
+        <button
+          type="button"
+          className="term__switch"
+          aria-pressed={matrixOn}
+          onClick={() => onMatrix(!matrixOn)}
+        >
+          cmatrix
+        </button>
+      </header>
 
-      <div className="term__screen" onClick={focusInput}>
-        {matrixOn && <canvas ref={canvasRef} className="term__matrix" aria-hidden="true" />}
-        <div className="term__veil" aria-hidden="true" />
-        <div ref={bodyRef} className="term__body">
-          <p className="term__bootline">
-            <span className="term__ok">●</span> barbosa.md shell v1.0 — cmatrix <em>on</em> · fastfetch · uptime
-          </p>
+      <div ref={screenRef} className="term__screen" onClick={onScreenClick}>
+        {!booted && (
+          <div className="term__line">
+            <Prompt />
+            <span className="term__cmd">{typed}</span>
+            <span className="term__caret" aria-hidden="true" />
+          </div>
+        )}
 
-          {history.map((line, i) => {
-            if (line.kind === 'cmd') {
+        {lines.map((line, i) => {
+          switch (line.kind) {
+            case 'cmd':
               return (
                 <div key={i} className="term__line">
-                  <span className="term__ps1">visitor@barbosa.md</span>
-                  <span className="term__sep">:</span>
-                  <span className="term__path">~</span>
-                  <span className="term__sep">$</span>
+                  <Prompt />
                   <span className="term__cmd">{line.text}</span>
                 </div>
               );
-            }
-            if (line.kind === 'fastfetch') {
+            case 'posts':
+              return (
+                <ol key={i} className="term__posts">
+                  {line.items.map((post) => (
+                    <li key={post.slug}>
+                      <span className="term__n">{String(numberOf(post)).padStart(2, '0')}</span>
+                      <Link to={`/posts/${post.slug}`}>{post.title}</Link>
+                      <span className="term__date">{shortDate(post.date)}</span>
+                    </li>
+                  ))}
+                </ol>
+              );
+            case 'tags':
+              return (
+                <p key={i} className="term__wrap">
+                  {tags.map((t) => (
+                    <Link key={t.slug} to={`/tags/${t.slug}`}>
+                      {t.name}
+                      <span className="term__dim"> {t.count}</span>
+                    </Link>
+                  ))}
+                </p>
+              );
+            case 'themes':
+              return (
+                <p key={i} className="term__wrap">
+                  {THEMES.map((t) => (
+                    <button key={t.id} type="button" onClick={() => run(`theme ${t.id}`)}>
+                      {t.id === theme ? `[${t.id}]` : t.id}
+                    </button>
+                  ))}
+                </p>
+              );
+            case 'help':
+              return (
+                <div key={i} className="term__help">
+                  <dl>
+                    {HELP.map(([cmd, what]) => (
+                      <div key={cmd}>
+                        <dt>{cmd}</dt>
+                        <dd>{what}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="term__dim">Tab completa, ↑ repete o último comando.</p>
+                </div>
+              );
+            case 'fetch':
               return (
                 <div key={i} className="term__fetch">
-                  <pre className="term__ascii" aria-hidden="true">
-                    {ASCII_LOGO.join('\n')}
-                  </pre>
-                  <dl className="term__specs">
-                    <div><dt>os</dt><dd>barbosaOS 1.0 x86_64</dd></div>
-                    <div><dt>kernel</dt><dd>6.9.0-vite</dd></div>
-                    <div><dt>uptime</dt><dd className="term__live">{uptime}</dd></div>
-                    <div><dt>shell</dt><dd>barbosa-sh (interactive)</dd></div>
-                    <div><dt>theme</dt><dd>{theme}</dd></div>
-                    <div><dt>posts</dt><dd>{postsCount} · {words.toLocaleString('pt-BR')} palavras · {tags} tópicos</dd></div>
-                    <div><dt>de</dt><dd>react + vite + markdown</dd></div>
-                    <div className="term__palette" aria-hidden="true">
-                      <i style={{ background: 'var(--accent)' }} />
-                      <i style={{ background: '#7ab87a' }} />
-                      <i style={{ background: '#61afef' }} />
-                      <i style={{ background: '#c678dd' }} />
-                      <i style={{ background: '#e0655a' }} />
-                      <i style={{ background: 'var(--ink-2)' }} />
-                    </div>
+                  <svg className="term__logo" viewBox="0 0 9 5" aria-hidden="true">
+                    {LOGO.flatMap((row, y) =>
+                      [...row].map((c, x) =>
+                        c === '#' ? <rect key={`${x}-${y}`} x={x + 0.06} y={y + 0.06} width="0.88" height="0.88" /> : null,
+                      ),
+                    )}
+                  </svg>
+                  <dl>
+                    <div><dt>blog</dt><dd>{site.name}</dd></div>
+                    <div><dt>autor</dt><dd>{site.author}</dd></div>
+                    <div><dt>artigos</dt><dd>{posts.length}, com {words.toLocaleString('pt-BR')} palavras</dd></div>
+                    <div><dt>tópicos</dt><dd>{tags.length}</dd></div>
+                    <div><dt>atualizado</dt><dd>{posts[0] ? shortDate(posts[0].date) : 'ainda não'}</dd></div>
+                    <div><dt>tema</dt><dd>{themeLabel}</dd></div>
+                    <div><dt>feito com</dt><dd>markdown, react e vite</dd></div>
                   </dl>
                 </div>
               );
-            }
-            if (line.kind === 'uptime-live') {
+            default:
               return (
-                <div key={i} className="term__line term__uptime">
-                  <span className="term__dim">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-                  {'  '}
-                  <span>up {uptime}</span>
-                  {'  '}
-                  <span className="term__dim">load 0.42 0.31 0.27 · shell live ●</span>
+                <div key={i} className={`term__line${line.tone ? ` term__line--${line.tone}` : ''}`}>
+                  {line.text}
                 </div>
               );
-            }
-            return (
-              <div key={i} className={`term__line${line.accent ? ' term__accent-line' : ''}`}>
-                {line.text}
-              </div>
-            );
-          })}
+          }
+        })}
 
-          {booted && (
-            <form className="term__line term__prompt" onSubmit={onSubmit}>
-              <span className="term__ps1">visitor@barbosa.md</span>
-              <span className="term__sep">:</span>
-              <span className="term__path">~</span>
-              <span className="term__sep">$</span>
-              <input
-                ref={inputRef}
-                className="term__input"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={onKeyDown}
-                aria-label="Digite um comando: help, fastfetch, uptime…"
-                placeholder="digite “help”…"
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-              />
-              <span className="term__caret" aria-hidden="true" />
-            </form>
-          )}
-        </div>
+        {booted && (
+          <form className="term__line term__prompt" onSubmit={onSubmit}>
+            <Prompt />
+            <input
+              ref={inputRef}
+              className="term__input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              aria-label="Comando do terminal"
+              placeholder="digite help"
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="go"
+            />
+          </form>
+        )}
       </div>
 
-      <div className="term__foot">
-        <span>⌨ interativo — help · fastfetch · uptime · matrix</span>
-        <span className="term__clock" title="uptime da sessão">{uptime}</span>
+      <div className="term__keys" role="group" aria-label="Atalhos de comandos">
+        {SHORTCUTS.map((cmd) => (
+          <button key={cmd} type="button" disabled={!booted} onClick={() => run(cmd)}>
+            {cmd}
+          </button>
+        ))}
       </div>
-    </div>
+    </section>
+  );
+}
+
+function Prompt() {
+  return (
+    <span className="term__ps1" aria-hidden="true">
+      ~ $
+    </span>
   );
 }

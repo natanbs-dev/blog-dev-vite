@@ -14,27 +14,29 @@ import { TagPage, Tags } from './pages/Tags';
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
   return null;
 }
 
 function Shell() {
+  const { pathname } = useLocation();
   return (
     <>
       <ScrollToTop />
       <Header />
-      <main>
-        <ErrorBoundary>
+      <main id="conteudo" tabIndex={-1}>
+        {/* a key faz o erro de uma página não "grudar" ao navegar para outra */}
+        <ErrorBoundary key={pathname}>
           <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/posts/:slug" element={<PostPage />} />
-          <Route path="/arquivo" element={<Archive />} />
-          <Route path="/tags" element={<Tags />} />
-          <Route path="/tags/:slug" element={<TagPage />} />
-          <Route path="/sobre" element={<About />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/posts/:slug" element={<PostPage />} />
+            <Route path="/arquivo" element={<Archive />} />
+            <Route path="/tags" element={<Tags />} />
+            <Route path="/tags/:slug" element={<TagPage />} />
+            <Route path="/sobre" element={<About />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </ErrorBoundary>
       </main>
       <Footer />
