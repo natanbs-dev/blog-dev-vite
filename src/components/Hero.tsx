@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useMotion } from '../lib/motion';
 import { site } from '../lib/site';
 import type { PostMeta } from '../lib/posts';
 import MatrixRain from './MatrixRain';
@@ -16,6 +17,7 @@ function readMatrixPref(): boolean {
 /** Abertura da home: manchete à esquerda, terminal sobre a chuva do cmatrix à direita. */
 export default function Hero({ latest, total }: { latest?: PostMeta; total: number }) {
   const [matrixOn, setMatrixOn] = useState(readMatrixPref);
+  const motion = useMotion();
 
   const onMatrix = (on: boolean) => {
     setMatrixOn(on);
@@ -44,7 +46,7 @@ export default function Hero({ latest, total }: { latest?: PostMeta; total: numb
           </p>
         </div>
         <div className="hero__stage">
-          {matrixOn && <MatrixRain />}
+          {matrixOn && <MatrixRain key={String(motion)} />}
           <Terminal matrixOn={matrixOn} onMatrix={onMatrix} />
         </div>
       </div>

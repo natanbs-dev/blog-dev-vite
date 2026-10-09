@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="gruvbox-dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
@@ -9,15 +9,22 @@
     <title>barbosa.md | blog de programação</title>
     <script>
       // Anti-FOUC: aplica o tema salvo antes da primeira pintura.
-      // Sem escolha salva, o padrão é o tema escuro.
+      // Sem escolha salva, o padrão é o Gruvbox.
       (function () {
-        var THEMES = ["dark", "light", "gruvbox-dark", "dracula", "one-dark", "nord", "catppuccin-dark"];
-        var theme = "dark";
+        var THEMES = ["gruvbox-dark", "obsidianite", "carbono", "dracula", "one-dark", "nord", "catppuccin-dark", "light"];
+        var theme = "gruvbox-dark";
         try {
-          var saved = localStorage.getItem("theme");
+          var saved = localStorage.getItem("theme-v2");
           if (saved && THEMES.indexOf(saved) > -1) theme = saved;
         } catch (e) {}
         document.documentElement.setAttribute("data-theme", theme);
+        // Animações: a escolha salva vale mais que o "reduzir movimento" do sistema.
+        var motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "off" : "on";
+        try {
+          var savedMotion = localStorage.getItem("motion");
+          if (savedMotion === "on" || savedMotion === "off") motion = savedMotion;
+        } catch (e) {}
+        document.documentElement.setAttribute("data-motion", motion);
       })();
     </script>
   </head>

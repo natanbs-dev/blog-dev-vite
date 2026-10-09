@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { setMotion, useMotion } from '../lib/motion';
 import { site } from '../lib/site';
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const motion = useMotion();
   return (
     <footer className="footer">
       <div className="wrap footer__inner">
@@ -16,6 +18,9 @@ export default function Footer() {
           <a href={`${import.meta.env.BASE_URL}feed.xml`}>RSS</a>
           <a href={site.github} rel="noreferrer">GitHub</a>
           <a href={`mailto:${site.email}`}>E-mail</a>
+          <button type="button" className="footer__motion" aria-pressed={motion} onClick={() => setMotion(!motion)}>
+            Animações: {motion ? 'ligadas' : 'desligadas'}
+          </button>
         </nav>
       </div>
     </footer>

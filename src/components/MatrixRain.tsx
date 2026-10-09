@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { motionOn } from '../lib/motion';
 
 const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789<>=*+-$#'.split('');
 const CELL = 16;
@@ -17,7 +18,7 @@ function cssVar(name: string, fallback: string): string {
 /**
  * Chuva de caracteres no estilo cmatrix. O canvas é transparente (o rastro
  * some por `destination-out`), então funciona sobre qualquer tema.
- * Pausa fora da tela e em aba oculta; com "reduzir movimento" vira um quadro fixo.
+ * Pausa fora da tela e em aba oculta; com as animações desligadas vira um quadro fixo.
  */
 export default function MatrixRain() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -34,8 +35,8 @@ export default function MatrixRain() {
     let head = '';
 
     const readColors = () => {
-      accent = cssVar('--accent', '#5ef0b0');
-      head = cssVar('--ink', '#e4eeea');
+      accent = cssVar('--accent', '#fe8019');
+      head = cssVar('--ink', '#ebdbb2');
     };
 
     const newColumn = (startAbove: boolean): Column => ({
@@ -82,7 +83,7 @@ export default function MatrixRain() {
       });
     };
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = !motionOn();
     // quadro fixo: redesenhado a cada redimensionamento, que limpa o canvas
     const render = () => {
       resize();

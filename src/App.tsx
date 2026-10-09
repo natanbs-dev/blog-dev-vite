@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import Intro from './components/Intro';
 import ErrorBoundary from './components/ErrorBoundary';
 import { CommandPalette } from './components/Search';
 import About from './pages/About';
@@ -21,13 +22,17 @@ function ScrollToTop() {
 
 function Shell() {
   const { pathname } = useLocation();
+  // voltar no histórico desliza no sentido contrário
+  const back = useNavigationType() === 'POP';
   return (
     <>
+      <Intro />
       <ScrollToTop />
       <Header />
       <main id="conteudo" tabIndex={-1}>
-        {/* a key faz o erro de uma página não "grudar" ao navegar para outra */}
-        <ErrorBoundary key={pathname}>
+        {/* a key reinicia o deslize e o ErrorBoundary a cada página */}
+        <div key={pathname} className={`page-slide${back ? ' page-slide--back' : ''}`}>
+        <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/posts/:slug" element={<PostPage />} />
@@ -38,6 +43,7 @@ function Shell() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
+        </div>
       </main>
       <Footer />
       <CommandPalette />

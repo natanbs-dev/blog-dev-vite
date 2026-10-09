@@ -9,6 +9,8 @@ import {
   shortDate,
   type PostMeta,
 } from '../lib/posts';
+import { INTRO_END, introPending } from '../lib/intro';
+import { motionOn, setMotion } from '../lib/motion';
 import { site } from '../lib/site';
 import { setTheme, THEMES, useTheme } from '../lib/theme';
 
@@ -30,11 +32,12 @@ const HELP: [string, string][] = [
   ['random', 'abre um artigo ao acaso'],
   ['theme [nome]', 'mostra ou troca o tema'],
   ['cmatrix [on|off]', 'liga ou desliga a chuva ao fundo'],
+  ['motion [on|off]', 'liga ou desliga as animações do site'],
   ['fastfetch', 'resumo do blog'],
   ['clear', 'limpa a tela'],
 ];
 
-const COMMANDS = ['ls', 'cat', 'grep', 'tags', 'cd', 'random', 'theme', 'cmatrix', 'fastfetch', 'clear', 'help', 'whoami', 'pwd', 'date', 'echo'];
+const COMMANDS = ['ls', 'cat', 'grep', 'tags', 'cd', 'random', 'theme', 'cmatrix', 'motion', 'fastfetch', 'clear', 'help', 'whoami', 'pwd', 'date', 'echo'];
 const SHORTCUTS = ['ls', 'tags', 'random', 'theme', 'cmatrix', 'help'];
 const PLACES: Record<string, string> = {
   '~': '/',
@@ -82,21 +85,28 @@ export default function Terminal({
       setTyped('');
       setBooted(true);
     };
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!motionOn()) {
       finish();
       return;
     }
     let i = 0;
+    let id = 0;
     let done = 0;
-    const id = window.setInterval(() => {
-      i += 1;
-      setTyped(BOOT.slice(0, i));
-      if (i >= BOOT.length) {
-        window.clearInterval(id);
-        done = window.setTimeout(finish, 320);
-      }
-    }, 70);
+    const start = () => {
+      id = window.setInterval(() => {
+        i += 1;
+        setTyped(BOOT.slice(0, i));
+        if (i >= BOOT.length) {
+          window.clearInterval(id);
+          done = window.setTimeout(finish, 320);
+        }
+      }, 70);
+    };
+    // na primeira visita, espera a abertura do site sair da frente
+    if (introPending()) window.addEventListener(INTRO_END, start, { once: true });
+    else start();
     return () => {
+      window.removeEventListener(INTRO_END, start);
       window.clearInterval(id);
       window.clearTimeout(done);
     };
@@ -209,6 +219,13 @@ export default function Terminal({
         print(say(next ? 'chuva ligada.' : 'chuva desligada.'));
         break;
       }
+      case 'motion':
+      case 'animacoes': {
+        const next = arg === 'on' ? true : arg === 'off' ? false : !motionOn();
+        setMotion(next);
+        print(say(next ? 'animações ligadas.' : 'animações desligadas.'));
+        break;
+      }
       case 'fastfetch':
       case 'neofetch':
         print({ kind: 'fetch' });
@@ -246,7 +263,7 @@ export default function Terminal({
       if (bin === 'ls') pool = tags.map((t) => t.slug);
       else if (bin === 'cd') pool = ['artigos', 'topicos', 'sobre'];
       else if (bin === 'theme' || bin === 'tema') pool = THEMES.map((t) => t.id);
-      else if (bin === 'cmatrix') pool = ['on', 'off'];
+      else if (bin === 'cmatrix' || bin === 'motion') pool = ['on', 'off'];
       else if (bin === 'cat' || bin === 'open') pool = posts.map((p) => p.slug);
       else return;
     }
