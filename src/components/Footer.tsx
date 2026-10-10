@@ -1,25 +1,27 @@
 import { Link } from 'react-router-dom';
+import { setMotion, useMotion } from '../lib/motion';
 import { site } from '../lib/site';
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const motion = useMotion();
   return (
     <footer className="footer">
-      <div className="wrap">
-        <p className="footer__word">
-          {site.name}
-          <span className="footer__cursor">_</span>
+      <div className="wrap footer__inner">
+        <p className="footer__note">
+          © {year} {site.author}. Escrito em markdown, publicado como site estático.
         </p>
         <nav className="footer__nav" aria-label="Rodapé">
-          <Link to="/">Início</Link>
           <Link to="/arquivo">Artigos</Link>
           <Link to="/tags">Tópicos</Link>
           <Link to="/sobre">Sobre</Link>
-          <a href={`mailto:${site.email}`}>Contato</a>
+          <a href={`${import.meta.env.BASE_URL}feed.xml`}>RSS</a>
+          <a href={site.github} rel="noreferrer">GitHub</a>
+          <a href={`mailto:${site.email}`}>E-mail</a>
+          <button type="button" className="footer__motion" aria-pressed={motion} onClick={() => setMotion(!motion)}>
+            Animações: {motion ? 'ligadas' : 'desligadas'}
+          </button>
         </nav>
-        <p className="footer__colophon">
-          © {year} {site.author} · composto em markdown · temas: tinta, papel & gruvbox
-        </p>
       </div>
     </footer>
   );

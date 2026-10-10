@@ -15,23 +15,13 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, { 
   render() {
     if (this.state.error) {
       return (
-        <div className="container">
-          <div className="notfound">
-            <div>
-              <div className="notfound__code">:/</div>
-              <h1>Algo quebrou ao renderizar</h1>
-              <p className="mono" style={{ color: 'var(--muted)', fontSize: 13 }}>
-                {this.state.error.message}
-              </p>
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => this.setState({ error: null })}
-              >
-                Tentar de novo
-              </button>
-            </div>
-          </div>
+        <div className="wrap notfound">
+          <p className="notfound__shell">erro: {this.state.error.message}</p>
+          <h1>Esta página falhou ao carregar</h1>
+          <p>Tente carregar de novo. Se continuar, o problema está no conteúdo desta página.</p>
+          <button type="button" className="btn btn--primary" onClick={() => this.setState({ error: null })}>
+            Carregar de novo
+          </button>
         </div>
       );
     }

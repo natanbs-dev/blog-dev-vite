@@ -1,51 +1,63 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useMotion } from '../lib/motion';
 import { site } from '../lib/site';
+import type { PostMeta } from '../lib/posts';
+import MatrixRain from './MatrixRain';
 import Terminal from './Terminal';
 
-/** Masthead — manchete editorial à esquerda + terminal tecnológico à direita. */
-export default function Masthead({
-  postsCount,
-  words,
-  tags,
-  updated,
-}: {
-  postsCount: number;
-  words: number;
-  tags: number;
-  updated: string;
-}) {
+const TITLE = 'Notas de quem resolve as coisas pelo terminal.';
+
+function readMatrixPref(): boolean {
+  try {
+    return localStorage.getItem('cmatrix') !== 'off';
+  } catch {
+    return true;
+  }
+}
+
+/** Abertura da home: manchete à esquerda, terminal sobre a chuva do cmatrix à direita. */
+export default function Hero({ latest, total }: { latest?: PostMeta; total: number }) {
+  const [matrixOn, setMatrixOn] = useState(readMatrixPref);
+  const motion = useMotion();
+
+  const onMatrix = (on: boolean) => {
+    setMatrixOn(on);
+    try {
+      localStorage.setItem('cmatrix', on ? 'on' : 'off');
+    } catch {
+      /* localStorage indisponível */
+    }
+  };
+
   return (
-    <section className="masthead">
-      <div className="wrap masthead__grid">
-        <div className="masthead__copy">
-          <p className="kicker">❯_ {site.name} · caderno de engenharia</p>
-          <h1 className="masthead__title">
-            Escrevo sobre <em>códigos</em> que resolvem problemas reais.
+    <section className="hero">
+      <div className="wrap hero__grid">
+        <div className="hero__copy">
+          <h1 className="hero__title" aria-label={TITLE}>
+            {TITLE.split(' ').map((word, i) => (
+              <span key={i} aria-hidden="true">
+                <span className="word">
+                  <span style={{ '--i': i } as React.CSSProperties}>{word}</span>
+                </span>{' '}
+              </span>
+            ))}
           </h1>
-          <p className="masthead__lede">
-            {site.description} Cada texto nasce direto no editor — sem painel, sem banco,
-            sem cerimônia.
+          <p className="hero__lede">{site.description}</p>
+          <p className="hero__actions">
+            {latest && (
+              <Link to={`/posts/${latest.slug}`} className="btn btn--primary">
+                Ler o artigo mais recente
+              </Link>
+            )}
+            <Link to="/arquivo" className="btn btn--ghost">
+              Ver os {total} artigos
+            </Link>
           </p>
-          <dl className="masthead__facts">
-            <div>
-              <dt>artigos</dt>
-              <dd>{String(postsCount).padStart(2, '0')}</dd>
-            </div>
-            <div>
-              <dt>palavras</dt>
-              <dd>{words.toLocaleString('pt-BR')}</dd>
-            </div>
-            <div>
-              <dt>tópicos</dt>
-              <dd>{String(tags).padStart(2, '0')}</dd>
-            </div>
-            <div>
-              <dt>atualizado</dt>
-              <dd>{updated}</dd>
-            </div>
-          </dl>
         </div>
-        <div className="masthead__term">
-          <Terminal postsCount={postsCount} words={words} tags={tags} />
+        <div className="hero__stage">
+          {matrixOn && <MatrixRain key={String(motion)} />}
+          <Terminal matrixOn={matrixOn} onMatrix={onMatrix} />
         </div>
       </div>
     </section>

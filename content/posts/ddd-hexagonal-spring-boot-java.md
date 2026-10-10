@@ -2,7 +2,7 @@
 title: "DDD e Arquitetura Hexagonal com Java e Spring Boot"
 description: "Entenda Domain-Driven Design e arquitetura hexagonal na prática: entidades, value objects, agregados, portas e adaptadores, com exemplos em Spring Boot."
 date: "2026-09-17"
-tags: ["java", "spring-boot", "ddd", "arquitetura"]
+tags: ["java", "spring-boot", "arquitetura", "ddd", "boas-práticas"]
 published: true
 ---
 

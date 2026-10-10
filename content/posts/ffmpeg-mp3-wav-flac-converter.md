@@ -2,7 +2,7 @@
 title: "ffmpeg: converter MP3, WAV, FLAC e comandos do dia a dia"
 description: "Os comandos ffmpeg mais úteis: converter entre mp3, wav, flac e opus, extrair áudio de vídeo, cortar, normalizar volume e processar em lote."
 date: "2026-09-16"
-tags: ["ffmpeg", "áudio", "terminal", "conversão"]
+tags: ["ffmpeg", "áudio", "vídeo", "terminal", "ferramentas"]
 published: true
 ---
 

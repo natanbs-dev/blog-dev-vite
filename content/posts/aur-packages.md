@@ -3,7 +3,7 @@ title: "AUR INFECTADO: MAIS DE 1600 PACOTES INFECTADOS NO REPOSITORIO AUR"
 description: "Ataque severo ao repositório archlinux causa danos graves na integridade de confiança do repositório comunitário AUR"
 date: "2026-06-15"
 author: "BarbosaDev"
-tags: ["shell"]
+tags: ["linux", "arch", "segurança", "shell", "terminal"]
 cover: ""
 featured: true
 published: true

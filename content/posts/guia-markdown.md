@@ -2,7 +2,7 @@
 title: "Guia do Markdown no barbosa.md"
 description: "Tudo que o blog entende: títulos, listas, tabelas, citações, imagens, código com botão copiar e mais."
 date: "2026-09-17"
-tags: ["markdown", "blog", "guia"]
+tags: ["markdown", "blog", "guia", "programação"]
 published: true
 ---
 

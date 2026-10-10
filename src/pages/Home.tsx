@@ -1,91 +1,76 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Masthead from '../components/Hero';
-import PostRow from '../components/PostCard';
-import Reveal from '../components/Reveal';
-import { formatDate, getAllPosts, getAllTags, getFeaturedPost, tagToSlug } from '../lib/posts';
+import Hero from '../components/Hero';
+import PostRow from '../components/PostRow';
+import { formatDate, getAllPosts, getAllTags, getFeaturedPost, getPostsByTag } from '../lib/posts';
+import { useTitle } from '../lib/useTitle';
+
+const FILTERS = 8;
 
 export default function Home() {
+  useTitle();
   const posts = getAllPosts();
-  const tags = getAllTags();
-  const words = posts.reduce((acc, p) => acc + p.words, 0);
-  // Destaque por importância: usa o post com `featured: true`.
-  // Se nenhum (ou mais de um) estiver marcado, cai para o mais recente.
+  const tags = getAllTags().slice(0, FILTERS);
+  const [filter, setFilter] = useState<string | null>(null);
+
+  // Destaque: o artigo com `featured: true`; sem nenhum marcado, o mais recente.
   const featured = getFeaturedPost() ?? posts[0];
-  const rest = featured ? posts.filter((p) => p.slug !== featured.slug) : posts;
-  // Atualizado = data máxima entre todos os posts (novo artigo atualiza sozinho).
-  const latest = posts[0]?.date;
+  const list = filter ? getPostsByTag(filter) : posts.filter((p) => p !== featured);
 
   return (
     <>
-      <Masthead
-        postsCount={posts.length}
-        words={words}
-        tags={tags.length}
-        updated={latest ? formatDate(latest, 'medium') : '—'}
-      />
+      <Hero latest={posts[0]} total={posts.length} />
 
-      <div className="wrap layout">
-        <div>
-          {featured && (
-            <Reveal>
-              <article className="feature">
-                <p className="feature__kicker">✎ destaque do caderno</p>
-                <h2 className="feature__title">
-                  <Link to={`/posts/${featured.slug}`}>{featured.title}</Link>
-                </h2>
-                <p className="feature__excerpt">{featured.description}</p>
-                <div className="feature__meta">
-                  <span>{formatDate(featured.date)}</span>
-                  <span>·</span>
-                  <span>{featured.readingTime} de leitura</span>
-                  <span>·</span>
-                  {featured.tags.slice(0, 2).map((t) => (
-                    <Link key={t} to={`/tags/${tagToSlug(t)}`} className="stamp stamp--sm">
-                      {t}
-                    </Link>
-                  ))}
-                </div>
-              </article>
-            </Reveal>
-          )}
-
-          <h2 className="section-label">
-            Índice de notas <Link to="/arquivo">ver tudo →</Link>
-          </h2>
-          <div className="rows">
-            {rest.length === 0 && !featured ? (
-              <p style={{ color: 'var(--muted)' }}>Caderno vazio. Em breve, novas notas por aqui.</p>
-            ) : (
-              rest.map((post, i) => <PostRow key={post.slug} post={post} index={i} />)
-            )}
-          </div>
-        </div>
-
-        <aside className="side">
-          <Reveal delay={80}>
-            <section className="side-box">
-              <h2 className="side-box__title">Tópicos</h2>
-              {tags.slice(0, 6).map((t) => (
-                <Link key={t.slug} to={`/tags/${t.slug}`} className="topic">
-                  <span className="topic__name">{t.name}</span>
-                  <span className="topic__count">({t.count})</span>
-                </Link>
-              ))}
-            </section>
-          </Reveal>
-          <Reveal delay={140}>
-            <section className="side-box">
-              <h2 className="side-box__title">Publicar</h2>
-              <p>
-                Nova nota publicada — o caderno indexa sozinho. Busca em <code>ctrl k</code>,
-                cópia em cada bloco de código.
+      <div className="wrap home">
+        {featured && (
+          <section className="feature" aria-labelledby="destaque">
+            <h2 id="destaque" className="feature__label">
+              Em destaque
+            </h2>
+            <div>
+              <h3 className="feature__title">
+                <Link to={`/posts/${featured.slug}`}>{featured.title}</Link>
+              </h3>
+              <p className="feature__excerpt">{featured.description}</p>
+              <p className="feature__meta">
+                <time dateTime={featured.date}>{formatDate(featured.date)}</time>
+                <span>{featured.readingTime} de leitura</span>
               </p>
-              <Link to="/sobre" className="btn btn--ghost">
-                Como funciona
-              </Link>
-            </section>
-          </Reveal>
-        </aside>
+            </div>
+          </section>
+        )}
+
+        <section aria-labelledby="artigos">
+          <div className="list-head">
+            <h2 id="artigos">Artigos</h2>
+            <div className="filters" role="group" aria-label="Filtrar por tópico">
+              <button type="button" aria-pressed={filter === null} onClick={() => setFilter(null)}>
+                todos
+              </button>
+              {tags.map((t) => (
+                <button
+                  key={t.slug}
+                  type="button"
+                  aria-pressed={filter === t.name}
+                  onClick={() => setFilter(filter === t.name ? null : t.name)}
+                >
+                  {t.name}
+                </button>
+              ))}
+              <Link to="/tags">todos os tópicos</Link>
+            </div>
+          </div>
+
+          {list.length === 0 ? (
+            <p className="empty">Ainda não há artigos publicados.</p>
+          ) : (
+            <div className="rows">
+              {list.map((post) => (
+                <PostRow key={post.slug} post={post} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </>
   );

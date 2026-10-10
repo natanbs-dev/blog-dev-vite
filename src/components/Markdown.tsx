@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useHeadingJump } from './PostChrome';
 
 const ICON_IDLE =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
@@ -40,22 +41,19 @@ function languageOf(code: HTMLElement): string {
  */
 export default function Markdown({ html }: { html: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const jump = useHeadingJump();
 
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    // Mesma causa do 404 do sumário: com HashRouter, <a href="#id">
-    // trocaria a rota. Intercepta cliques em âncoras internas.
+    // Âncoras internas passam pelo useHeadingJump (ver PostChrome).
     const onClick = (e: MouseEvent) => {
       const a = (e.target as HTMLElement).closest?.('a[href^="#"]');
       if (!a || !root.contains(a)) return;
-      const id = a.getAttribute('href')?.slice(1);
-      if (!id) return;
-      const el = document.getElementById(id);
-      if (!el) return;
+      const id = decodeURIComponent(a.getAttribute('href')?.slice(1) ?? '');
+      if (!id || !document.getElementById(id)) return;
       e.preventDefault();
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${id}`);
+      jump(id);
     };
     root.addEventListener('click', onClick);
     const pres = root.querySelectorAll<HTMLPreElement>('pre');
@@ -71,14 +69,9 @@ export default function Markdown({ html }: { html: string }) {
       const bar = document.createElement('div');
       bar.className = 'codeblock__bar';
 
-      const dots = document.createElement('span');
-      dots.className = 'codeblock__dots';
-      dots.setAttribute('aria-hidden', 'true');
-      dots.innerHTML = '<i></i><i></i><i></i>';
-
       const langEl = document.createElement('span');
       langEl.className = 'codeblock__lang';
-      langEl.textContent = lang || 'code';
+      langEl.textContent = lang || 'texto';
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -114,7 +107,6 @@ export default function Markdown({ html }: { html: string }) {
           });
       });
 
-      bar.appendChild(dots);
       bar.appendChild(langEl);
       bar.appendChild(btn);
       wrapper.appendChild(bar);
@@ -123,7 +115,7 @@ export default function Markdown({ html }: { html: string }) {
     });
 
     return () => root.removeEventListener('click', onClick);
-  }, [html]);
+  }, [html, jump]);
 
   return <div ref={ref} className="prose" dangerouslySetInnerHTML={{ __html: html }} />;
 }
