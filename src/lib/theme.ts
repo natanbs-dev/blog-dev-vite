@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { motionOn } from './motion';
 
 export const DEFAULT_THEME = 'gruvbox-dark';
 
@@ -20,13 +21,24 @@ export function getTheme(): string {
 }
 
 export function setTheme(id: string): void {
-  document.documentElement.setAttribute('data-theme', id);
+  const root = document.documentElement;
+  const apply = () => {
+    root.setAttribute('data-theme', id);
+    window.dispatchEvent(new Event(EVENT));
+  };
   try {
     localStorage.setItem('theme-v2', id);
   } catch {
     /* localStorage indisponível */
   }
-  window.dispatchEvent(new Event(EVENT));
+  // O tema novo entra varrendo a tela (ver .theme-wipe no CSS); sem suporte
+  // a View Transitions, ou com as animações desligadas, troca na hora.
+  if (!motionOn() || !document.startViewTransition || id === getTheme()) {
+    apply();
+    return;
+  }
+  root.classList.add('theme-wipe');
+  document.startViewTransition(apply).finished.finally(() => root.classList.remove('theme-wipe'));
 }
 
 function subscribe(onChange: () => void) {

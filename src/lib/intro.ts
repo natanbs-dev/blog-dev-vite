@@ -13,6 +13,8 @@ function shouldPlay(): boolean {
 }
 
 let pending = shouldPlay();
+// o CSS segura as animações da página enquanto a abertura cobre a tela
+if (pending) document.documentElement.setAttribute('data-intro', '');
 
 export function introPending(): boolean {
   return pending;
@@ -21,6 +23,7 @@ export function introPending(): boolean {
 export function endIntro(): void {
   if (!pending) return;
   pending = false;
+  document.documentElement.removeAttribute('data-intro');
   try {
     sessionStorage.setItem('intro', '1');
   } catch {

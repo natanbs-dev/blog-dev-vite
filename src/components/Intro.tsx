@@ -28,17 +28,21 @@ export default function Intro() {
       aria-hidden="true"
       onAnimationStart={(e) => {
         // a cortina começou a subir: o resto da página já pode se mexer
-        if (e.animationName === 'intro-out') endIntro();
+        if (e.animationName === 'wipe-out') endIntro();
       }}
       onAnimationEnd={(e) => {
-        if (e.animationName === 'intro-out') setShow(false);
+        if (e.animationName === 'wipe-out') setShow(false);
       }}
     >
-      <p className="intro__name">
-        <span className="intro__mark">❯</span>
-        <span className="intro__type">{site.name}</span>
-        <span className="intro__caret" />
-      </p>
+      <div className="intro__box">
+        <p className="intro__name">
+          <span className="intro__mark">❯</span>
+          <span className="intro__type">{site.name}</span>
+          <span className="intro__caret" />
+        </p>
+        <span className="intro__rule" />
+        <p className="intro__tag">notas de terminal, código e arquitetura</p>
+      </div>
     </div>
   );
 }

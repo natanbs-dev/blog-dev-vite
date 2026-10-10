@@ -2,7 +2,7 @@
 title: "yt-dlp: baixar em MP3, FLAC, WAV e vídeos em alta qualidade"
 description: "Guia prático de yt-dlp: extrair áudio em mp3, flac e wav, baixar vídeo na qualidade máxima ou em 720p, e a melhor forma de instalar — pip ou pacote da distro."
 date: "2026-09-18"
-tags: ["yt-dlp", "terminal", "áudio", "vídeo"]
+tags: ["yt-dlp", "terminal", "áudio", "vídeo", "ferramentas"]
 published: true
 
 ---

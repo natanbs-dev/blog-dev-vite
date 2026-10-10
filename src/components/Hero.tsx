@@ -6,6 +6,8 @@ import type { PostMeta } from '../lib/posts';
 import MatrixRain from './MatrixRain';
 import Terminal from './Terminal';
 
+const TITLE = 'Notas de quem resolve as coisas pelo terminal.';
+
 function readMatrixPref(): boolean {
   try {
     return localStorage.getItem('cmatrix') !== 'off';
@@ -32,7 +34,15 @@ export default function Hero({ latest, total }: { latest?: PostMeta; total: numb
     <section className="hero">
       <div className="wrap hero__grid">
         <div className="hero__copy">
-          <h1 className="hero__title">Notas de quem resolve as coisas pelo terminal.</h1>
+          <h1 className="hero__title" aria-label={TITLE}>
+            {TITLE.split(' ').map((word, i) => (
+              <span key={i} aria-hidden="true">
+                <span className="word">
+                  <span style={{ '--i': i } as React.CSSProperties}>{word}</span>
+                </span>{' '}
+              </span>
+            ))}
+          </h1>
           <p className="hero__lede">{site.description}</p>
           <p className="hero__actions">
             {latest && (

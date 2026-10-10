@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllPosts, normalize, searchPosts, shortDate, type SearchDoc } from '../lib/posts';
 
 const OPEN_EVENT = 'blog:open-search';
-const MAX_HITS = 12;
+const MAX_HITS = 8;
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -131,6 +131,7 @@ export function CommandPalette() {
   };
 
   const total = getAllPosts().length;
+  const searching = query.trim() !== '';
 
   return (
     <div
@@ -141,6 +142,10 @@ export function CommandPalette() {
     >
       <div className="sheet" role="dialog" aria-modal="true" aria-label="Buscar artigos">
         <div className="sheet__head">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" />
+            <path d="M16 16l4.5 4.5" />
+          </svg>
           <input
             ref={inputRef}
             type="search"
@@ -155,45 +160,62 @@ export function CommandPalette() {
             autoComplete="off"
             spellCheck={false}
           />
-          <button type="button" className="sheet__close" onClick={() => setOpen(false)}>
-            Fechar
+          <button type="button" className="sheet__close" aria-label="Fechar busca" onClick={() => setOpen(false)}>
+            <kbd>Esc</kbd>
           </button>
         </div>
 
         <div className="sheet__body" ref={listRef}>
           {hits.length === 0 ? (
             <p className="sheet__hint">
-              Nenhum artigo menciona “{query.trim()}”. Tente um termo mais curto ou o nome de um tópico.
+              <strong>Nenhum artigo menciona “{query.trim()}”</strong>
+              Tente um termo mais curto ou o nome de um tópico.
             </p>
           ) : (
-            hits.map((hit, i) => (
-              <button
-                type="button"
-                key={hit.post.slug}
-                tabIndex={-1}
-                className={`sheet__row${i === active ? ' is-active' : ''}`}
-                onMouseMove={() => setActive(i)}
-                onClick={() => go(hit.post.slug)}
-              >
-                <span className="sheet__title">{hit.post.title}</span>
-                <span className="sheet__snippet" dangerouslySetInnerHTML={{ __html: snippet(hit, tokens) }} />
-                <span className="sheet__meta">
-                  {shortDate(hit.post.date)}
-                  {hit.post.tags.slice(0, 3).map((t) => (
-                    <span key={t} className="tag">
-                      {t}
-                    </span>
-                  ))}
-                </span>
-              </button>
-            ))
+            <>
+              <p className="sheet__label">{searching ? 'Resultados' : 'Artigos recentes'}</p>
+              {hits.map((hit, i) => (
+                <button
+                  type="button"
+                  key={hit.post.slug}
+                  tabIndex={-1}
+                  className={`sheet__row${i === active ? ' is-active' : ''}`}
+                  onMouseMove={() => setActive(i)}
+                  onClick={() => go(hit.post.slug)}
+                >
+                  <span className="sheet__title">{hit.post.title}</span>
+                  <span className="sheet__date">{shortDate(hit.post.date)}</span>
+                  <span className="sheet__snippet" dangerouslySetInnerHTML={{ __html: snippet(hit, tokens) }} />
+                  <span className="sheet__meta">
+                    {hit.post.tags.slice(0, 3).map((t) => (
+                      <span key={t} className="tag">
+                        {t}
+                      </span>
+                    ))}
+                  </span>
+                  <kbd className="sheet__enter" aria-hidden="true">
+                    ↵
+                  </kbd>
+                </button>
+              ))}
+            </>
           )}
         </div>
 
-        <p className="sheet__foot" aria-live="polite">
-          {query.trim()
-            ? `${hits.length} de ${total} artigos`
-            : `${total} artigos. Setas escolhem, Enter abre, Esc fecha.`}
+        <p className="sheet__foot">
+          <span>
+            <kbd>↑</kbd>
+            <kbd>↓</kbd> escolher
+          </span>
+          <span>
+            <kbd>↵</kbd> abrir
+          </span>
+          <span>
+            <kbd>Esc</kbd> fechar
+          </span>
+          <span className="sheet__count" aria-live="polite">
+            {searching ? `${hits.length} de ${total} artigos` : `${total} artigos`}
+          </span>
         </p>
       </div>
     </div>

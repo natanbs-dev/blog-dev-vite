@@ -312,7 +312,6 @@ export default function Terminal({
   };
 
   const themeLabel = THEMES.find((t) => t.id === theme)?.label ?? theme;
-  const words = posts.reduce((sum, p) => sum + p.words, 0);
 
   return (
     <section className="term" aria-label="Terminal do blog">
@@ -406,7 +405,7 @@ export default function Terminal({
                   <dl>
                     <div><dt>blog</dt><dd>{site.name}</dd></div>
                     <div><dt>autor</dt><dd>{site.author}</dd></div>
-                    <div><dt>artigos</dt><dd>{posts.length}, com {words.toLocaleString('pt-BR')} palavras</dd></div>
+                    <div><dt>artigos</dt><dd>{posts.length}</dd></div>
                     <div><dt>tópicos</dt><dd>{tags.length}</dd></div>
                     <div><dt>atualizado</dt><dd>{posts[0] ? shortDate(posts[0].date) : 'ainda não'}</dd></div>
                     <div><dt>tema</dt><dd>{themeLabel}</dd></div>
