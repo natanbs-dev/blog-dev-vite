@@ -3,7 +3,7 @@ title: "Rust: Por que todo desenvolvedor deveria aprender em 2024"
 description: "Rust lidera pesquisas de linguagens amadas há anos seguidos. Mas o que torna ela tão especial? Vamos mergulhar nos conceitos que fazem Rust ser diferente de tudo que veio antes."
 date: "2024-02-08"
 author: "Ana Ribeiro"
-tags: ["rust", "sistemas", "performance", "linguagens"]
+tags: ["rust", "linguagens", "performance", "sistemas", "programação"]
 cover: ""
 featured: false
 ---

@@ -46,7 +46,6 @@ export interface TagInfo {
 /* Adicionar um .md na pasta faz o post aparecer automaticamente.      */
 /* ------------------------------------------------------------------ */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rawModules = import.meta.glob('../../content/posts/*.md', {
   query: '?raw',
   import: 'default',
@@ -57,17 +56,20 @@ interface ParsedFile {
   slug: string;
   data: Record<string, unknown>;
   content: string;
-  raw: string;
 }
 
-function allFiles(): ParsedFile[] {
-  return Object.entries(rawModules).map(([filePath, raw]) => {
-    const file = filePath.split('/').pop() ?? filePath;
-    const slug = file.replace(/\.md$/i, '');
-    const { data, content } = parseFrontmatter(raw as string);
-    return { slug, data: data as Record<string, unknown>, content, raw: raw as string };
-  });
+// O título já aparece no cabeçalho do artigo: um "# Título" no topo do
+// markdown viraria um segundo título na página.
+function stripLeadingTitle(content: string): string {
+  return content.replace(/^\s*#\s+.+\r?\n+/, '');
 }
+
+const files: ParsedFile[] = Object.entries(rawModules).map(([filePath, raw]) => {
+  const file = filePath.split('/').pop() ?? filePath;
+  const slug = file.replace(/\.md$/i, '');
+  const { data, content } = parseFrontmatter(raw);
+  return { slug, data, content: stripLeadingTitle(content) };
+});
 
 /* ------------------------------------------------------------------ */
 /* helpers                                                             */
@@ -77,6 +79,16 @@ function parseDateUTC(date: string): Date {
   if (date.includes('T') || date.includes(' ')) return new Date(date);
   const [y, m, d] = date.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d, 12));
+}
+
+const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** "18 set 2026" — forma compacta usada nas listas. */
+export function shortDate(date: string): string {
+  if (!date) return '';
+  const d = parseDateUTC(date);
+  if (Number.isNaN(d.getTime())) return date;
+  return `${String(d.getUTCDate()).padStart(2, '0')} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 export function formatDate(date: string, style: 'long' | 'medium' = 'long'): string {
@@ -177,53 +189,125 @@ export function extractToc(content: string): TocItem[] {
   return toc;
 }
 
+
 /* ------------------------------------------------------------------ */
 /* data access                                                         */
 /* ------------------------------------------------------------------ */
 
-function toMeta(slug: string, data: Record<string, unknown>, raw: string): PostMeta {
-  const body = raw.replace(/^---[\s\S]*?---/, '');
-  const words = countWords(body);
-  const date = (data.date as string | undefined) ?? '';
+function toMeta({ slug, data, content }: ParsedFile): PostMeta {
   return {
     slug,
     title: (data.title as string) ?? slug,
     description: (data.description as string) ?? '',
-    date,
+    date: (data.date as string | undefined) ?? '',
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
     published: data.published === undefined ? true : Boolean(data.published),
     featured: Boolean(data.featured),
-    words,
-    readingTime: humanReadingTime(body),
+    words: countWords(content),
+    readingTime: humanReadingTime(content),
   };
+}
+
+const posts: PostMeta[] = files
+  .map(toMeta)
+  .filter((p) => p.published)
+  .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+const rendered = new Map<string, Post>();
+
+/** Artigos publicados, do mais recente para o mais antigo. */
+export function getAllPosts(): PostMeta[] {
+  return posts;
 }
 
 export function getFeaturedPost(): PostMeta | null {
-  const posts = getAllPosts();
   return posts.find((p) => p.featured) ?? null;
 }
 
-export function getAllPosts(): PostMeta[] {
-  return allFiles()
-    .map(({ slug, data, raw }) => toMeta(slug, data, raw))
-    .filter((p) => p.published)
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-}
-
 export function getPost(slug: string): Post | null {
-  const found = allFiles().find((f) => f.slug === slug);
-  if (!found) return null;
-  const meta = toMeta(found.slug, found.data, found.raw);
-  return {
+  const cached = rendered.get(slug);
+  if (cached) return cached;
+  const meta = posts.find((p) => p.slug === slug);
+  const file = files.find((f) => f.slug === slug);
+  if (!meta || !file) return null;
+  const post: Post = {
     ...meta,
-    content: found.content,
-    html: renderMarkdown(found.content),
-    toc: extractToc(found.content),
+    content: file.content,
+    html: renderMarkdown(file.content),
+    toc: extractToc(file.content),
   };
+  rendered.set(slug, post);
+  return post;
 }
 
-export function getPostSlugs(): string[] {
-  return allFiles().map((f) => f.slug);
+/** Artigos que dividem tópicos com `slug`, dos mais parecidos para os menos. */
+export function getRelatedPosts(slug: string, limit = 3): PostMeta[] {
+  const current = posts.find((p) => p.slug === slug);
+  if (!current) return [];
+  const mine = new Set(current.tags.map((t) => t.trim().toLowerCase()));
+  return posts
+    .filter((p) => p.slug !== slug)
+    .map((p) => ({ post: p, shared: p.tags.filter((t) => mine.has(t.trim().toLowerCase())).length }))
+    .filter((r) => r.shared > 0)
+    .sort((a, b) => b.shared - a.shared)
+    .slice(0, limit)
+    .map((r) => r.post);
+}
+
+/* ------------------------------------------------------------------ */
+/* busca                                                               */
+/* ------------------------------------------------------------------ */
+
+export interface SearchDoc {
+  post: PostMeta;
+  /** Texto do artigo sem a marcação do markdown. */
+  text: string;
+}
+
+function toPlainText(markdown: string): string {
+  return markdown
+    .replace(/^```.*$/gm, ' ')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^\s*(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replace(/[*_`~|]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+let searchDocs: SearchDoc[] | null = null;
+
+export function getSearchDocs(): SearchDoc[] {
+  if (!searchDocs) {
+    searchDocs = posts.map((post) => ({
+      post,
+      text: toPlainText(files.find((f) => f.slug === post.slug)?.content ?? ''),
+    }));
+  }
+  return searchDocs;
+}
+
+/** Minúsculas e sem acentos, para comparar "audio" com "áudio". */
+export function normalize(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+}
+
+/** Artigos em que todos os termos aparecem; título pesa mais que o corpo. */
+export function searchPosts(query: string): SearchDoc[] {
+  const tokens = normalize(query).split(/\s+/).filter(Boolean);
+  if (!tokens.length) return getSearchDocs();
+  return getSearchDocs()
+    .map((doc) => {
+      const title = normalize(doc.post.title);
+      const hay = `${title} ${normalize(doc.post.description)} ${normalize(doc.post.tags.join(' '))} ${normalize(doc.text)}`;
+      if (!tokens.every((t) => hay.includes(t))) return null;
+      return { doc, score: tokens.filter((t) => title.includes(t)).length };
+    })
+    .filter((r) => r !== null)
+    .sort((a, b) => b.score - a.score)
+    .map((r) => r.doc);
 }
 
 /* ------------------------------------------------------------------ */
@@ -234,9 +318,12 @@ export function tagToSlug(name: string): string {
   return new Slugger().slug(name.trim());
 }
 
+let tagList: TagInfo[] | null = null;
+
 export function getAllTags(): TagInfo[] {
+  if (tagList) return tagList;
   const map = new Map<string, { name: string; count: number }>();
-  for (const post of getAllPosts()) {
+  for (const post of posts) {
     for (const rawTag of post.tags) {
       const name = rawTag.trim();
       if (!name) continue;
@@ -246,19 +333,17 @@ export function getAllTags(): TagInfo[] {
       else map.set(key, { name, count: 1 });
     }
   }
-  return Array.from(map.values())
+  tagList = Array.from(map.values())
     .map((t) => ({ name: t.name, slug: tagToSlug(t.name), count: t.count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'pt-BR'));
+  return tagList;
 }
 
 export function getPostsByTag(name: string): PostMeta[] {
   const needle = name.trim().toLowerCase();
-  return getAllPosts().filter((p) => p.tags.some((t) => t.trim().toLowerCase() === needle));
+  return posts.filter((p) => p.tags.some((t) => t.trim().toLowerCase() === needle));
 }
 
 export function findTagBySlug(slug: string): string | null {
-  const exact = getAllTags().find((t) => t.slug === slug);
-  if (exact) return exact.name;
-  const fallback = getAllTags().find((t) => tagToSlug(t.name) === slug);
-  return fallback?.name ?? null;
+  return getAllTags().find((t) => t.slug === slug)?.name ?? null;
 }

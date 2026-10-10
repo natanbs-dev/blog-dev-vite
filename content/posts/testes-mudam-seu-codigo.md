@@ -2,7 +2,7 @@
 title: "Teste antes de entregar: o hábito que muda seu código"
 description: "Testes automatizados não são perda de tempo — são garantia de confiança. Um guia prático sobre como começar a testar de verdade, sem dogmatismo."
 date: "2026-08-15"
-tags: ["testes", "boas-práticas", "tdd"]
+tags: ["testes", "boas-práticas", "tdd", "produtividade"]
 published: true
 ---
 

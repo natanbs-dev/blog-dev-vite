@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Reveal from '../components/Reveal';
+import { motionOn } from '../lib/motion';
 import { site } from '../lib/site';
 import { getAllPosts, getAllTags } from '../lib/posts';
+import { useTitle } from '../lib/useTitle';
 
 /* ================================================================
    MINICURRÍCULO — edite livremente: perfil, skills e trajetória.
@@ -9,8 +11,7 @@ import { getAllPosts, getAllTags } from '../lib/posts';
 
 const profile = {
   name: 'Natan Barbosa',
-  initials: 'NB',
-  role: 'Desenvolvedor de software · criador deste blog',
+  role: 'Desenvolvedor de software e autor deste blog.',
   bio: 'Escrevo código e escrevo sobre código. Este blog nasceu da vontade de transformar as anotações soltas do meu dia a dia em conteúdo útil para outros desenvolvedores e desenvolvedoras.',
 };
 
@@ -21,8 +22,8 @@ const principles = [
 ];
 
 const skillGroups = [
-  { label: 'Linguagens', items: ['JavaScript', 'TypeScript'] },
-  { label: 'Front & back', items: ['React', 'Node.js'] },
+  { label: 'Linguagens', items: ['JavaScript', 'TypeScript', 'Java', 'Python'] },
+  { label: 'Front & back', items: ['React', 'Node.js', 'Java'] },
   { label: 'Dados & ops', items: ['SQL', 'Docker', 'Terminal / Linux'] },
 ];
 
@@ -30,150 +31,171 @@ const skillGroups = [
 const timeline = [
   {
     role: 'Desenvolvedor de software',
-    when: '2023 — presente',
+    when: '2023 até hoje',
     desc: 'Construção de aplicações web com React e Node.js, do protótipo ao deploy — APIs, bancos relacionais e automação pelo terminal.',
   },
   {
-    role: 'Aprofundamento em engenharia de software',
-    when: '2021 — 2023',
-    desc: 'Base sólida em JavaScript/TypeScript, SQL, testes automatizados e boas práticas de código legível e revisões que ensinam.',
+    role: 'Desenvolvedor Full Stack | Compass Uol',
+    when: '2023 a 2024',
+    desc: 'Desenvolvimento de gateway de pagamento — e o hábito de documentar tudo, que mais tarde virou este blog.',
   },
   {
-    role: 'Primeiros passos no código',
-    when: '2020 — 2021',
-    desc: 'Fundamentos de programação, lógica e web — e o hábito de documentar tudo, que mais tarde virou este blog.',
+    role: 'Análise e Desenvolvimento de Sistema | Estácio',
+    when: '2019 a 2023',
+    desc: 'Fundamentos de lógica de programação, paradigmas de linguagens de programação e inciação na área da técnologia.',
   },
 ];
 
+/** Número que conta de zero até o valor ao entrar na página. */
+function Count({ to }: { to: number }) {
+  const [n, setN] = useState(() => (motionOn() ? 0 : to));
+  useEffect(() => {
+    if (!motionOn()) return;
+    let raf = 0;
+    const start = performance.now();
+    const step = (t: number) => {
+      const p = Math.min(1, (t - start) / 1100);
+      setN(Math.round(to * (1 - (1 - p) ** 3)));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    // aba em segundo plano não roda requestAnimationFrame: garante o valor final
+    const done = window.setTimeout(() => setN(to), 1600);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(done);
+    };
+  }, [to]);
+  return <>{n.toLocaleString('pt-BR')}</>;
+}
+
 export default function About() {
+  useTitle('Sobre');
   const posts = getAllPosts();
   const tags = getAllTags();
+  const words = posts.reduce((sum, p) => sum + p.words, 0);
+  const user = profile.name.split(' ')[0].toLowerCase();
 
   return (
-    <div className="wrap" style={{ paddingBottom: 88 }}>
-      <div className="page-head">
-        <p className="kicker">❯_ sobre</p>
-        <h1>Olá, eu sou o {profile.name}.</h1>
-        <p>
-          Desenvolvedor de software que acredita em código legível, interfaces
-          rápidas e em documentar o próprio aprendizado.
-        </p>
-        <p className="whoami">
-          <span className="whoami__ps1">natan@barbosa.md:~$</span> whoami
-          <span className="whoami__out">→ {profile.name.toLowerCase().replace(/\s+/g, '.')}</span>
-        </p>
-      </div>
-
-      <div className="about-grid">
-        <div className="about-main">
-          <Reveal>
-            <section className="about-panel about-identity">
-              <div className="avatar avatar--lg" aria-hidden="true">
-                {profile.initials}
-              </div>
-              <div>
-                <h2>{profile.name}</h2>
-                <p className="about-identity__role">{profile.role}</p>
-                <p className="about-identity__bio">{profile.bio}</p>
-              </div>
-            </section>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">No que acredito</h3>
-              <ul className="values">
-                {principles.map((v, i) => (
-                  <li key={v.title}>
-                    <span className="values__n">{String(i + 1).padStart(2, '0')}</span>
-                    <h4>{v.title}</h4>
-                    <p>{v.desc}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </Reveal>
-
-          <Reveal delay={120}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">Trajetória</h3>
-              <ul className="timeline">
-                {timeline.map((item) => (
-                  <li key={item.role}>
-                    <h4>{item.role}</h4>
-                    <span className="when">{item.when}</span>
-                    <p>{item.desc}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </Reveal>
+    <div className="wrap page about">
+      <header className="about-hero">
+        <div>
+          <p className="about-hero__cmd">
+            <span>~ $</span>whoami
+          </p>
+          <h1>{profile.name}</h1>
+          <p className="about-hero__role">{profile.role}</p>
+          <p className="about__actions">
+            <a className="btn btn--primary" href={`mailto:${site.email}`}>
+              Enviar e-mail
+            </a>
+            <a className="btn btn--ghost" href={site.github} rel="noreferrer">
+              Abrir o GitHub
+            </a>
+          </p>
         </div>
 
-        <aside className="about-side">
-          <Reveal delay={100}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">Ficha</h3>
-              <dl className="facts">
-                <div>
-                  <dt>nome</dt>
-                  <dd>{profile.name}</dd>
-                </div>
-                <div>
-                  <dt>base</dt>
-                  <dd>JavaScript · TypeScript</dd>
-                </div>
-                <div>
-                  <dt>foco</dt>
-                  <dd>React · Node · SQL</dd>
-                </div>
-                <div>
-                  <dt>artigos</dt>
-                  <dd>
-                    {posts.length} em {tags.length} tópicos
-                  </dd>
-                </div>
-              </dl>
-            </section>
-          </Reveal>
-
-          <Reveal delay={160}>
-            <section className="about-panel">
-              <h3 className="about-panel__title">Stack do dia a dia</h3>
-              {skillGroups.map((g) => (
-                <div key={g.label} className="skill-group">
-                  <h4>{g.label}</h4>
-                  <div className="skills">
-                    {g.items.map((s) => (
-                      <span className="skill-chip" key={s}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </section>
-          </Reveal>
-
-          <Reveal delay={220}>
-            <section className="about-panel about-contact">
-              <h3 className="about-panel__title">Vamos conversar</h3>
-              <p>
-                Troco ideia sobre tecnologia, carreira e produtividade. Me chame
-                por e-mail ou acompanhe as publicações.
-              </p>
-              <p className="about-section__actions">
-                <a className="btn btn--primary" href={`mailto:${site.email}`}>
-                  Enviar e-mail
-                </a>
-                <Link to="/" className="btn btn--ghost">
-                  Ler o blog →
-                </Link>
-              </p>
-            </section>
-          </Reveal>
+        <aside className="about-card" aria-label="Ficha">
+          <p className="about-card__bar">
+            {user}@{site.name}: ~/sobre
+          </p>
+          <dl>
+            <div>
+              <dt>nome</dt>
+              <dd>{profile.name}</dd>
+            </div>
+            {skillGroups.map((g) => (
+              <div key={g.label}>
+                <dt>{g.label.toLowerCase()}</dt>
+                <dd>{g.items.join(', ')}</dd>
+              </div>
+            ))}
+            <div>
+              <dt>escreve em</dt>
+              <dd>markdown</dd>
+            </div>
+          </dl>
+          <p className="about-card__prompt" aria-hidden="true">
+            ~ $<i />
+          </p>
         </aside>
-      </div>
+      </header>
+
+      <dl className="stats">
+        <div>
+          <dt>artigos publicados</dt>
+          <dd><Count to={posts.length} /></dd>
+        </div>
+        <div>
+          <dt>tópicos cobertos</dt>
+          <dd><Count to={tags.length} /></dd>
+        </div>
+        <div>
+          <dt>minutos de leitura</dt>
+          <dd><Count to={Math.round(words / 200)} /></dd>
+        </div>
+      </dl>
+
+      <section className="about-sec" aria-labelledby="bio">
+        <h2 id="bio">Sobre</h2>
+        <p className="about__bio">{profile.bio}</p>
+      </section>
+
+      <section className="about-sec" aria-labelledby="principios">
+        <h2 id="principios">No que acredito</h2>
+        <ul className="values">
+          {principles.map((v) => (
+            <li key={v.title}>
+              <h3>{v.title}</h3>
+              <p>{v.desc}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="about-sec" aria-labelledby="trajetoria">
+        <h2 id="trajetoria">Trajetória</h2>
+        <ol className="timeline">
+          {timeline.map((item) => (
+            <li key={item.role}>
+              <span className="timeline__when">{item.when}</span>
+              <div className="timeline__body">
+                <h3>{item.role}</h3>
+                <p>{item.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="about-sec" aria-labelledby="stack">
+        <h2 id="stack">Stack do dia a dia</h2>
+        <dl className="stack">
+          {skillGroups.map((g) => (
+            <div key={g.label}>
+              <dt>{g.label}</dt>
+              <dd>
+                {g.items.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="about-cta" aria-labelledby="contato">
+        <h2 id="contato">Vamos conversar</h2>
+        <p>Troco ideia sobre tecnologia, carreira e produtividade.</p>
+        <p className="about__actions">
+          <a className="btn btn--primary" href={`mailto:${site.email}`}>
+            Enviar e-mail
+          </a>
+          <Link to="/arquivo" className="btn btn--ghost">
+            Ler os artigos
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

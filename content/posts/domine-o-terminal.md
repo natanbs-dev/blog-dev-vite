@@ -2,7 +2,7 @@
 title: "Domine o terminal: 10 atalhos que vão mudar seu dia"
 description: "O terminal ainda é a ferramenta mais poderosa do desenvolvedor. Um guia direto ao ponto com os atalhos e comandos que mais impactam a produtividade."
 date: "2026-07-20"
-tags: ["terminal", "unix", "produtividade"]
+tags: ["terminal", "linux", "shell", "unix", "produtividade"]
 published: true
 ---
 

@@ -1,36 +1,33 @@
-import { Link } from 'react-router-dom';
-import { formatDate, getAllPosts } from '../lib/posts';
+import PostRow from '../components/PostRow';
+import { getAllPosts, type PostMeta } from '../lib/posts';
+import { useTitle } from '../lib/useTitle';
 
 export default function Archive() {
+  useTitle('Artigos');
   const posts = getAllPosts();
-  const byYear = new Map<string, typeof posts>();
+  const byYear = new Map<string, PostMeta[]>();
   for (const p of posts) {
-    const year = (p.date || '').slice(0, 4) || 's.d.';
-    if (!byYear.has(year)) byYear.set(year, []);
-    byYear.get(year)!.push(p);
+    const year = p.date.slice(0, 4) || 'Sem data';
+    byYear.set(year, [...(byYear.get(year) ?? []), p]);
   }
 
   return (
-    <div className="wrap" style={{ paddingBottom: 88 }}>
-      <div className="page-head">
-        <p className="kicker">❯_ arquivo</p>
-        <h1>Todas as notas</h1>
+    <div className="wrap page">
+      <header className="page-head">
+        <h1>Artigos</h1>
         <p>
-          {posts.length} verbetes, em ordem cronológica inversa.
+          {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}, do mais recente para o mais antigo.
         </p>
-      </div>
+      </header>
 
       {[...byYear.entries()].map(([year, items]) => (
-        <section key={year} className="year">
-          <h2 className="year__title">— {year}</h2>
-          <div className="ledger">
+        <section key={year} className="year" aria-labelledby={`ano-${year}`}>
+          <h2 id={`ano-${year}`} className="year__title">
+            {year}
+          </h2>
+          <div className="rows">
             {items.map((p) => (
-              <Link key={p.slug} to={`/posts/${p.slug}`} className="ledger__item">
-                <span className="ledger__date">{formatDate(p.date, 'medium')}</span>
-                <span className="ledger__title">{p.title}</span>
-                <span className="ledger__dots" aria-hidden />
-                <span className="ledger__arrow">→</span>
-              </Link>
+              <PostRow key={p.slug} post={p} />
             ))}
           </div>
         </section>

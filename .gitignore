@@ -106,3 +106,5 @@ Desktop.ini
 *.bak
 *.orig
 ~$*
+
+.claude/settings.local.json

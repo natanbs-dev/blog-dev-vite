@@ -1,9 +1,9 @@
 export const site = {
   name: 'barbosa.md',
   author: 'Natan Barbosa',
-  url: 'http://localhost:5173',
+  url: 'https://natanbs-dev.github.io/blog-dev-vite',
   email: 'natan_nbs@protonmail.com',
   description:
-    'Blog de programação: guias práticos, boas práticas e reflexões sobre engenharia de software, ferramentas e produtividade.',
-  github: 'https://github.com/',
+    'Guias práticos de terminal, áudio e vídeo pela linha de comando, arquitetura de software e o que mais eu aprender pelo caminho.',
+  github: 'https://github.com/natanbs-dev',
 } as const;
