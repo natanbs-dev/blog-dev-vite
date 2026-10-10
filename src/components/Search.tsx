@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPosts, normalize, searchPosts, shortDate, type SearchDoc } from '../lib/posts';
+import { site } from '../lib/site';
+import StackLoop from './StackLoop';
 
 const OPEN_EVENT = 'blog:open-search';
 const MAX_HITS = 8;
@@ -123,7 +125,7 @@ export function CommandPalette() {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const hit = hits[active];
-      if (hit) go(hit.post.slug);
+      if (hit && !egg) go(hit.post.slug);
     } else if (e.key === 'Tab') {
       // o campo é o único ponto de foco: os resultados se escolhem com as setas
       e.preventDefault();
@@ -132,6 +134,8 @@ export function CommandPalette() {
 
   const total = getAllPosts().length;
   const searching = query.trim() !== '';
+  // digitar o nome do site troca os resultados por uma animação
+  const egg = query.trim().toLowerCase() === site.name;
 
   return (
     <div
@@ -166,7 +170,9 @@ export function CommandPalette() {
         </div>
 
         <div className="sheet__body" ref={listRef}>
-          {hits.length === 0 ? (
+          {egg ? (
+            <StackLoop />
+          ) : hits.length === 0 ? (
             <p className="sheet__hint">
               <strong>Nenhum artigo menciona “{query.trim()}”</strong>
               Tente um termo mais curto ou o nome de um tópico.
@@ -214,7 +220,7 @@ export function CommandPalette() {
             <kbd>Esc</kbd> fechar
           </span>
           <span className="sheet__count" aria-live="polite">
-            {searching ? `${hits.length} de ${total} artigos` : `${total} artigos`}
+            {egg ? 'em loop' : searching ? `${hits.length} de ${total} artigos` : `${total} artigos`}
           </span>
         </p>
       </div>

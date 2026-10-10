@@ -13,8 +13,12 @@ function shouldPlay(): boolean {
 }
 
 let pending = shouldPlay();
-// o CSS segura as animações da página enquanto a abertura cobre a tela
-if (pending) document.documentElement.setAttribute('data-intro', '');
+if (pending) {
+  // o CSS segura as animações da página enquanto a abertura cobre a tela
+  document.documentElement.setAttribute('data-intro', '');
+  // e, neste carregamento, o cabeçalho já nasce no lugar: é nele que o nome pousa
+  document.documentElement.setAttribute('data-intro-run', '');
+}
 
 export function introPending(): boolean {
   return pending;
