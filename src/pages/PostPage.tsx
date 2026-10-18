@@ -47,6 +47,12 @@ export default function PostPage() {
           </p>
         </header>
 
+        {post.cover && (
+          <figure className="article__cover">
+            <img src={post.cover.src} width={post.cover.width} height={post.cover.height} alt={post.coverAlt} decoding="async" />
+          </figure>
+        )}
+
         <div className="article__grid">
           <Toc items={post.toc} />
           <Markdown html={post.html} />

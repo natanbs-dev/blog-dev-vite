@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import matter from 'gray-matter'
 import { defineConfig, type Plugin } from 'vite'
+import { imagetools } from 'vite-imagetools'
 import { site } from './src/lib/site.ts'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
@@ -41,7 +42,8 @@ function rssFeed(): Plugin {
 export default defineConfig({
   // base relativa: o build funciona em qualquer subpasta ou até file://
   base: './',
-  plugins: [react(), rssFeed()],
+  // imagetools: as fotos de content/ são redimensionadas e convertidas no build (ver src/lib/posts.ts)
+  plugins: [react(), imagetools(), rssFeed()],
   resolve: {
     alias: {
       '@': path.join(root, 'src'),

@@ -22,42 +22,32 @@ export function getTheme(): string {
 
 let swaps = 0;
 
-/**
- * Mostra um tema sem salvar a escolha. O tema novo entra varrendo a tela
- * (ver .theme-wipe no CSS); sem suporte a View Transitions, ou com as
- * animações desligadas, troca na hora. `alongside` roda junto com a troca,
- * para o que precisa mudar no mesmo quadro.
- */
-export function showTheme(id: string, alongside?: () => void, fast = false): Promise<void> {
+export function setTheme(id: string): void {
   const root = document.documentElement;
   const apply = () => {
     root.setAttribute('data-theme', id);
-    alongside?.();
     window.dispatchEvent(new Event(EVENT));
   };
-  if (!motionOn() || !document.startViewTransition || id === getTheme()) {
-    apply();
-    return Promise.resolve();
-  }
-  const mine = ++swaps;
-  root.classList.add('theme-wipe');
-  root.classList.toggle('theme-wipe--fast', fast);
-  return document
-    .startViewTransition(apply)
-    .finished.catch(() => {})
-    .finally(() => {
-      // uma troca mais nova pode ter atropelado esta: quem limpa é a última
-      if (mine === swaps) root.classList.remove('theme-wipe', 'theme-wipe--fast');
-    });
-}
-
-export function setTheme(id: string): void {
   try {
     localStorage.setItem('theme-v2', id);
   } catch {
     /* localStorage indisponível */
   }
-  void showTheme(id);
+  // O tema novo entra varrendo a tela (ver .theme-wipe no CSS); sem suporte
+  // a View Transitions, ou com as animações desligadas, troca na hora.
+  if (!motionOn() || !document.startViewTransition || id === getTheme()) {
+    apply();
+    return;
+  }
+  const mine = ++swaps;
+  root.classList.add('theme-wipe');
+  document
+    .startViewTransition(apply)
+    .finished.catch(() => {})
+    .finally(() => {
+      // uma troca mais nova pode ter atropelado esta: quem limpa é a última
+      if (mine === swaps) root.classList.remove('theme-wipe');
+    });
 }
 
 function subscribe(onChange: () => void) {

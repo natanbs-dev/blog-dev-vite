@@ -5,7 +5,6 @@ import Header from './components/Header';
 import Intro from './components/Intro';
 import ErrorBoundary from './components/ErrorBoundary';
 import { CommandPalette } from './components/Search';
-import ThemeTour from './components/ThemeTour';
 import About from './pages/About';
 import Archive from './pages/Archive';
 import Home from './pages/Home';
@@ -48,7 +47,6 @@ function Shell() {
       </main>
       <Footer />
       <CommandPalette />
-      <ThemeTour />
     </>
   );
 }

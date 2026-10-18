@@ -538,6 +538,25 @@ kbd {
 .row__excerpt { margin-top: 6px; max-width: 62ch; font-size: 1.25rem; line-height: 1.4; color: var(--ink-2); }
 .row__tags { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; line-height: 1.4; }
 
+/* capas: miniatura 16:9 gerada no build (ver Picture em posts.ts) */
+.row--thumb { grid-template-columns: 8.5rem minmax(0, 1fr) auto 176px; }
+.row__thumb, .feature__cover {
+  display: block;
+  align-self: start;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.row__thumb img, .feature__cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.row:hover .row__thumb img, .feature:hover .feature__cover img { transform: scale(1.04); }
+.row:hover .row__thumb, .feature:hover .feature__cover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.feature--cover { grid-template-columns: 8.5rem minmax(0, 1fr) minmax(0, 34%); }
+
+.article__cover { margin: 0 0 clamp(28px, 4vw, 44px); overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.article__cover img { width: 100%; max-height: 560px; object-fit: cover; }
+
 /* ================================================================
    páginas internas
    ================================================================ */
@@ -555,6 +574,7 @@ kbd {
 .year__title { position: sticky; top: calc(var(--top-h) + 16px); align-self: start; padding-top: 20px; font-size: var(--t-xl); color: var(--accent); }
 .year .row { grid-template-columns: minmax(0, 1fr) auto; }
 .year .row__date { grid-column: 1 / -1; }
+.year .row--thumb { grid-template-columns: minmax(0, 1fr) auto 176px; }
 
 /* tópicos: a barra mostra quantos artigos cada um tem */
 .topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 0 40px; margin-top: 24px; }
@@ -706,6 +726,28 @@ kbd {
 .prose h3 { margin: 1.8em 0 0.6em; font-size: 1.1875rem; font-weight: 600; }
 .prose h4 { margin: 1.6em 0 0.5em; font-size: 1rem; font-weight: 600; }
 .prose p, .prose ul, .prose ol { margin: 0 0 1.2em; }
+
+/* linha do tempo: um trilho liga os "##" e se preenche com a leitura (ver timeline em Markdown.tsx) */
+.prose--rail { --rail-gap: 36px; --rail-x: 6px; position: relative; max-width: calc(70ch + var(--rail-gap)); padding-left: var(--rail-gap); }
+.rail { position: absolute; left: calc(var(--rail-x) - 1px); width: 2px; background: var(--line); border-radius: 1px; pointer-events: none; }
+.rail__fill { position: absolute; inset: 0; background: var(--accent); border-radius: inherit; transform: scaleY(0); transform-origin: top; }
+.prose--rail > h2 { position: relative; }
+.prose--rail > h2::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0.575em;
+  left: calc(var(--rail-x) - var(--rail-gap));
+  width: 11px;
+  height: 11px;
+  background: var(--bg);
+  border: 2px solid color-mix(in srgb, var(--ink) 32%, var(--line));
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.prose--rail > h2.is-passed::before { background: var(--accent); border-color: var(--accent); }
+.prose--rail > h2.is-current::before { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); transform: translate(-50%, -50%) scale(1.2); }
 
 .prose a:not(.anchor) { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .prose a:not(.anchor):hover { text-decoration-thickness: 2px; }
@@ -1104,33 +1146,6 @@ kbd {
 /* troca de tema: o tema novo entra varrendo da esquerda para a direita */
 .theme-wipe::view-transition-old(root) { animation: none; }
 .theme-wipe::view-transition-new(root) { animation: wipe-in 0.7s cubic-bezier(0.7, 0, 0.2, 1); }
-/* no passeio da primeira visita são oito trocas seguidas: cada uma um pouco mais curta */
-.theme-wipe--fast::view-transition-new(root) { animation-duration: 0.55s; }
-
-/* passeio pelos temas: etiqueta com o tema da vez */
-.tour {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  z-index: 80;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 16px;
-  font-family: var(--font-mono);
-  font-stretch: 80%;
-  font-size: var(--t-s);
-  white-space: nowrap;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
-  border-radius: 999px;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.28);
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.tour__mark { color: var(--accent); }
-.tour__count { color: var(--muted); }
 
 /* troca de página: desliza da direita ao avançar, da esquerda ao voltar */
 .page-slide { animation: page-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
@@ -1269,12 +1284,17 @@ a.tag:hover { transform: translateY(-1px); }
   .row__time { grid-row: 1; grid-column: 2; }
   .row__time::before { content: "/ "; opacity: 0.6; }
   .row__body { grid-column: 1 / -1; }
+  /* celular: a miniatura vira faixa larga acima do título */
+  .row--thumb, .year .row--thumb { grid-template-columns: auto minmax(0, 1fr); }
+  .row__thumb { grid-column: 1 / -1; grid-row: 1; aspect-ratio: 2 / 1; margin-bottom: 6px; }
+  .row--thumb .row__date, .row--thumb .row__time { grid-row: 2; }
   .year { grid-template-columns: minmax(0, 1fr); margin-top: 28px; }
   .year__title { position: static; padding-top: 0; }
   .year .row { grid-template-columns: auto minmax(0, 1fr); }
   .year .row__date { grid-column: 1; }
 
   .prose { font-size: 1.0625rem; line-height: 1.7; }
+  .prose--rail { --rail-gap: 22px; --rail-x: 5px; }
   .prose pre { padding: 14px; }
   .post-nav { grid-template-columns: minmax(0, 1fr); }
   .post-nav__link--next { text-align: left; }

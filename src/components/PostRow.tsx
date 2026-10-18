@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
 import { shortDate, tagToSlug, type PostMeta } from '../lib/posts';
 
-/** Linha da lista de artigos: data, título com resumo e tópicos, tempo de leitura. */
+/**
+ * Linha da lista de artigos: data, título com resumo e tópicos, tempo de
+ * leitura e, se o artigo tiver capa, a miniatura dela.
+ */
 export default function PostRow({ post }: { post: PostMeta }) {
   return (
-    <article className="row">
+    <article className={`row${post.thumb ? ' row--thumb' : ''}`}>
       <time className="row__date" dateTime={post.date}>
         {shortDate(post.date)}
       </time>
@@ -24,6 +27,12 @@ export default function PostRow({ post }: { post: PostMeta }) {
         )}
       </div>
       <span className="row__time">{post.readingTime}</span>
+      {post.thumb && (
+        // o título ao lado já é o link e o nome: a miniatura é decorativa para leitor de tela
+        <Link to={`/posts/${post.slug}`} className="row__thumb" tabIndex={-1} aria-hidden="true">
+          <img src={post.thumb.src} width={post.thumb.width} height={post.thumb.height} alt="" loading="lazy" decoding="async" />
+        </Link>
+      )}
     </article>
   );
 }

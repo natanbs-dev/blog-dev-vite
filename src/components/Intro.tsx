@@ -26,8 +26,10 @@ export default function Intro() {
     const root = document.documentElement;
     let docking = false;
     let timer = 0;
+    let raf = 0;
 
     const finish = () => {
+      cancelAnimationFrame(raf);
       root.removeAttribute('data-docking');
       endIntro();
       setShow(false);
@@ -51,7 +53,22 @@ export default function Intro() {
       const dy = b.top + b.height / 2 - n.top - s * (m.top + m.height / 2 - n.top);
       docking = true;
       // a largura fica travada: a fonte muda no caminho e não pode recentralizar a caixa
-      const w = name.parentElement!.getBoundingClientRect().width;
+      const box = name.parentElement!;
+      const box0 = box.getBoundingClientRect();
+      const w = box0.width;
+      // O destino foi medido uma vez, mas a tela pode mudar durante o voo: no
+      // celular a barra do navegador some ou volta e recentraliza a abertura.
+      // A cada quadro, o que a caixa e o logotipo andaram desde a medição
+      // entra como um deslocamento à parte, sem reiniciar a transição.
+      const follow = () => {
+        const now = brandMark.getBoundingClientRect();
+        const at = box.getBoundingClientRect();
+        const fx = now.left - b.left - (at.left - box0.left);
+        const fy = now.top + now.height / 2 - (b.top + b.height / 2) - (at.top - box0.top);
+        name.style.translate = `${fx}px ${fy}px`;
+        raf = requestAnimationFrame(follow);
+      };
+      raf = requestAnimationFrame(follow);
       setDock({ '--dx': `${dx}px`, '--dy': `${dy}px`, '--s': s, '--w': `${w}px` } as CSSProperties);
       // o logotipo de verdade some até o nome pousar; o resto da página já pode entrar
       root.setAttribute('data-docking', '');
@@ -64,6 +81,7 @@ export default function Intro() {
     window.addEventListener('pointerdown', leave);
     return () => {
       window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
       window.removeEventListener('keydown', leave);
       window.removeEventListener('pointerdown', leave);
       root.removeAttribute('data-docking');

@@ -23,7 +23,7 @@ export default function Home() {
 
       <div className="wrap home">
         {featured && (
-          <section className="feature" aria-labelledby="destaque">
+          <section className={`feature${featured.thumb ? ' feature--cover' : ''}`} aria-labelledby="destaque">
             <h2 id="destaque" className="feature__label">
               Em destaque
             </h2>
@@ -37,6 +37,11 @@ export default function Home() {
                 <span>{featured.readingTime} de leitura</span>
               </p>
             </div>
+            {featured.thumb && (
+              <Link to={`/posts/${featured.slug}`} className="feature__cover" tabIndex={-1} aria-hidden="true">
+                <img src={featured.thumb.src} width={featured.thumb.width} height={featured.thumb.height} alt="" decoding="async" />
+              </Link>
+            )}
           </section>
         )}
 

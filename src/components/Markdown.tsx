@@ -36,8 +36,82 @@ function languageOf(code: HTMLElement): string {
 }
 
 /**
+ * Linha do tempo do artigo: um trilho vertical liga os títulos "##" e vai
+ * sendo preenchido conforme a leitura avança; rolar para cima desfaz.
+ * As cores vêm das variáveis do tema (ver .rail no CSS).
+ */
+function timeline(root: HTMLElement): () => void {
+  const stops = Array.from(root.querySelectorAll<HTMLElement>(':scope > h2'));
+  if (stops.length < 2) return () => {};
+
+  const rail = document.createElement('span');
+  rail.className = 'rail';
+  rail.setAttribute('aria-hidden', 'true');
+  const fill = document.createElement('span');
+  fill.className = 'rail__fill';
+  rail.appendChild(fill);
+  root.classList.add('prose--rail');
+  root.appendChild(rail);
+
+  // altura de cada ponto dentro do artigo: o meio da primeira linha do título
+  let centers: number[] = [];
+  const layout = () => {
+    centers = stops.map((h) => h.offsetTop + parseFloat(getComputedStyle(h).lineHeight) / 2);
+    rail.style.top = `${centers[0]}px`;
+    rail.style.height = `${centers[centers.length - 1] - centers[0]}px`;
+  };
+
+  const update = () => {
+    const vh = window.innerHeight;
+    // a "linha de leitura" fica a 45% da tela; perto do fim da página ela
+    // desce até a base, para o último ponto sempre poder ser alcançado
+    const left = Math.max(0, document.documentElement.scrollHeight - vh - window.scrollY);
+    const line = vh - Math.min(vh * 0.55, left);
+    const box = rail.getBoundingClientRect();
+    const done = box.height > 0 ? Math.min(1, Math.max(0, (line - box.top) / box.height)) : 0;
+    fill.style.transform = `scaleY(${done})`;
+    let current = -1;
+    centers.forEach((c, i) => {
+      if (box.top + c - centers[0] <= line + 0.5) current = i;
+    });
+    stops.forEach((h, i) => {
+      h.classList.toggle('is-passed', i <= current);
+      h.classList.toggle('is-current', i === current);
+    });
+  };
+
+  let raf = 0;
+  const onScroll = () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(update);
+  };
+  const onResize = () => {
+    layout();
+    onScroll();
+  };
+  // imagens e blocos de código mudam a altura do texto depois da montagem
+  const ro = new ResizeObserver(onResize);
+  ro.observe(root);
+  layout();
+  update();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onResize);
+
+  return () => {
+    cancelAnimationFrame(raf);
+    ro.disconnect();
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', onResize);
+    rail.remove();
+    root.classList.remove('prose--rail');
+    stops.forEach((h) => h.classList.remove('is-passed', 'is-current'));
+  };
+}
+
+/**
  * Renderiza HTML gerado do markdown e injeta a barra de
- * linguagem + botão "Copiar" em cada <pre> (requisito do projeto).
+ * linguagem + botão "Copiar" em cada <pre> (requisito do projeto),
+ * além da linha do tempo que liga os títulos.
  */
 export default function Markdown({ html }: { html: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -114,7 +188,12 @@ export default function Markdown({ html }: { html: string }) {
       wrapper.appendChild(pre);
     });
 
-    return () => root.removeEventListener('click', onClick);
+    const stopTimeline = timeline(root);
+
+    return () => {
+      root.removeEventListener('click', onClick);
+      stopTimeline();
+    };
   }, [html, jump]);
 
   return <div ref={ref} className="prose" dangerouslySetInnerHTML={{ __html: html }} />;
