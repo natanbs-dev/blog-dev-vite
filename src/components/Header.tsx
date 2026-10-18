@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ThemePicker from './ThemePicker';
 import { SearchBox } from './Search';
 import { site } from '../lib/site';
+import AccountButton from './AccountButton';
 
 const LINKS = [
   { to: '/arquivo', label: 'Artigos' },
@@ -39,6 +40,7 @@ export default function Header() {
         <div className="topbar__actions">
           <SearchBox />
           <ThemePicker />
+          <AccountButton />
           <button
             type="button"
             className="icon-btn menu-btn"

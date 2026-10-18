@@ -18,6 +18,7 @@ export default function Footer() {
           <a href={`${import.meta.env.BASE_URL}feed.xml`}>RSS</a>
           <a href={site.github} rel="noreferrer">GitHub</a>
           <a href={`mailto:${site.email}`}>E-mail</a>
+          <Link to="/privacidade">Privacidade</Link>
           <button type="button" className="footer__motion" aria-pressed={motion} onClick={() => setMotion(!motion)}>
             Animações: {motion ? 'ligadas' : 'desligadas'}
           </button>

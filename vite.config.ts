@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import matter from 'gray-matter'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from 'vite'
 import { imagetools } from 'vite-imagetools'
 import { site } from './src/lib/site.ts'
 
@@ -38,8 +38,21 @@ function rssFeed(): Plugin {
   }
 }
 
+/** Em dev/preview, /api vai para a API local com o segredo do proxy (o mesmo papel da função do Cloudflare). */
+function apiProxy(env: Record<string, string>): Record<string, ProxyOptions> {
+  return {
+    '/api': {
+      target: env.API_URL || 'http://127.0.0.1:8787',
+      headers: { 'x-proxy-secret': env.API_PROXY_SECRET ?? '' },
+    },
+  }
+}
+
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // sem prefixo VITE_: estas variáveis ficam só no Node, nunca vão para o bundle
+  const env = loadEnv(mode, root, '')
+  return {
   // base relativa: o build funciona em qualquer subpasta ou até file://
   base: './',
   // imagetools: as fotos de content/ são redimensionadas e convertidas no build (ver src/lib/posts.ts)
@@ -49,4 +62,7 @@ export default defineConfig({
       '@': path.join(root, 'src'),
     },
   },
+  server: { proxy: apiProxy(env) },
+  preview: { proxy: apiProxy(env) },
+  }
 })
