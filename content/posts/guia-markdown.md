@@ -3,6 +3,8 @@ title: "Guia do Markdown no barbosa.md"
 description: "Tudo que o blog entende: títulos, listas, tabelas, citações, imagens, código com botão copiar e mais."
 date: "2026-09-17"
 tags: ["markdown", "blog", "guia", "programação"]
+cover: "./img/capa-guia-markdown.png"
+coverAlt: "Editor com markdown cru à esquerda e o texto formatado à direita"
 published: true
 ---
 
@@ -15,6 +17,8 @@ Passe o mouse sobre um `h2` ou `h3` para ver o link `#`. Os títulos alimentam o
 ### Subtítulo de exemplo
 
 Texto com *itálico*, **negrito**, ~~riscado~~, `código inline` e um [link externo](https://vite.dev).
+
+
 
 ## Listas e tarefas
 
@@ -71,7 +75,33 @@ def saudacao(nome: str) -> str:
 
 ---
 
-Use `---` para separar seções. Imagens com legenda funcionam com markdown padrão — coloque o arquivo em `public/` e referencie com `/nome.png`.
+![[max.jpg]]
+
+Use `---` para separar seções.
+
+Para imagens, coloque o arquivo numa pasta ao lado dos artigos, como `content/posts/img/`, e aponte para ele com caminho relativo:
+
+```markdown
+![Descrição da foto](./img/minha-foto.jpg)
+```
+
+Quem escreve no Obsidian pode usar o jeito dele, só com o nome do arquivo. O blog procura a imagem dentro de `content/` pelo nome:
+
+```markdown
+![[minha-foto.jpg]]
+![[minha-foto.jpg|Descrição da foto]]
+```
+
+Cuidado com espaço entre `]` e `(`: `![foto] (./img/foto.jpg)` não é imagem para o markdown, vira texto comum.
+
+Pode ser foto grande, direto da câmera: no build ela é reduzida para no máximo 1600px de largura e convertida para WebP. A página reserva o espaço da imagem antes de ela carregar, e ela só baixa quando chega perto da tela. GIF e SVG passam sem conversão.
+
+Para dar uma capa ao artigo, use `cover` no front-matter. Ela aparece no topo do artigo e, em miniatura recortada em 16:9, nas listas e no destaque da home:
+
+```yaml
+cover: "./img/capa.jpg"
+coverAlt: "O que aparece na foto"
+```
 
 ## Checklist de leitura
 

@@ -48,6 +48,12 @@ secrets/
 credentials/
 id_rsa*
 *.token
+# segredos locais das Pages Functions (wrangler pages dev)
+.dev.vars
+.dev.vars.*
+# backups do banco da API (dados pessoais dos leitores)
+*.dump
+*.sql.gz
 
 # ---------- logs ----------
 logs/
@@ -108,3 +114,8 @@ Desktop.ini
 ~$*
 
 .claude/settings.local.json
+
+# ---------- Obsidian ----------
+# Estado da janela (arquivos abertos, layout): muda a cada uso e é pessoal.
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json

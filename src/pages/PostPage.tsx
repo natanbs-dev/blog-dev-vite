@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import Comments from '../components/Comments';
 import Markdown from '../components/Markdown';
 import PostRow from '../components/PostRow';
 import { BackToTop, ReadingProgress, Toc } from '../components/PostChrome';
@@ -47,6 +48,12 @@ export default function PostPage() {
           </p>
         </header>
 
+        {post.cover && (
+          <figure className="article__cover">
+            <img src={post.cover.src} width={post.cover.width} height={post.cover.height} alt={post.coverAlt} decoding="async" />
+          </figure>
+        )}
+
         <div className="article__grid">
           <Toc items={post.toc} />
           <Markdown html={post.html} />
@@ -80,6 +87,8 @@ export default function PostPage() {
             )}
           </nav>
         </footer>
+
+        <Comments slug={post.slug} />
       </article>
 
       {related.length > 0 && (
